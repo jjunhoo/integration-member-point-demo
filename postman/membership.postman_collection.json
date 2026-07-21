@@ -1,0 +1,190 @@
+{
+  "info": {
+    "name": "통합 멤버십 데모",
+    "description": "통합회원 + 소셜로그인(카카오/네이버/애플) + JWT + 포인트 API 테스트 컬렉션.\n\n사용법:\n1. Collection Variables 의 baseUrl 확인 (기본 http://localhost:8080)\n2. '인증 > 애플 로그인(데모)' 실행 → accessToken/refreshToken 이 컬렉션 변수에 자동 저장됨\n3. '통합회원' 및 '포인트' 요청 실행\n\n참고: 카카오/네이버는 실제 provider access token 이 있어야 200 응답. 애플은 데모 id_token 으로 로컬 테스트 가능.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "channel", "value": "O4O_APP" },
+    { "key": "userId", "value": "postman-user" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "appleIdToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "인증 (Auth)",
+      "item": [
+        {
+          "name": "애플 로그인 (데모 id_token 자동생성)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// 데모용 Apple id_token(JWT) 생성: 서명부는 검증 안 함(데모).",
+                  "function b64url(s){ return btoa(s).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,''); }",
+                  "var header = b64url(JSON.stringify({alg:'RS256', kid:'demo'}));",
+                  "var payload = b64url(JSON.stringify({",
+                  "  iss:'https://appleid.apple.com',",
+                  "  aud:'com.retail.app',",
+                  "  sub:'apple-user-0001',",
+                  "  email:'apple_user@privaterelay.appleid.com'",
+                  "}));",
+                  "pm.collectionVariables.set('appleIdToken', header + '.' + payload + '.demosig');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function(){ pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "console.log('accessToken 저장 완료');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/social/apple", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","social","apple"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channel\": \"{{channel}}\",\n  \"token\": \"{{appleIdToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "카카오 로그인 (실토큰 필요)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/social/kakao", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","social","kakao"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channel\": \"{{channel}}\",\n  \"token\": \"<카카오 SDK 로 받은 access token>\"\n}"
+            }
+          }
+        },
+        {
+          "name": "네이버 로그인 (실토큰 필요)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/social/naver", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","social","naver"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channel\": \"{{channel}}\",\n  \"token\": \"<네이버 SDK 로 받은 access token>\"\n}"
+            }
+          }
+        },
+        {
+          "name": "토큰 재발급 (refresh)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function(){ pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', json.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","refresh"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "로그아웃 (refresh 회수)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Authorization", "value": "Bearer {{accessToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/logout", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "통합회원 (Member, 인증 필요)",
+      "item": [
+        {
+          "name": "내 정보 + 채널 목록 조회",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{accessToken}}" } ],
+            "url": { "raw": "{{baseUrl}}/api/v1/members/me", "host": ["{{baseUrl}}"], "path": ["api","v1","members","me"] }
+          }
+        },
+        {
+          "name": "채널 계정 연결 (편의점)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/members/me/channels", "host": ["{{baseUrl}}"], "path": ["api","v1","members","me","channels"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channel\": \"CVS\",\n  \"channelMemberNo\": \"CVS-1234567\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "포인트 (Point, permitAll)",
+      "item": [
+        {
+          "name": "적립",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/api/v1/membership/points/accumulate", "host": ["{{baseUrl}}"], "path": ["api","v1","membership","points","accumulate"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"amount\": 50000\n}"
+            }
+          }
+        },
+        {
+          "name": "차감",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/api/v1/membership/points/deduct", "host": ["{{baseUrl}}"], "path": ["api","v1","membership","points","deduct"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"amount\": 3000\n}"
+            }
+          }
+        },
+        {
+          "name": "포인트 뷰 조회",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/membership/{{userId}}/view", "host": ["{{baseUrl}}"], "path": ["api","v1","membership","{{userId}}","view"] }
+          }
+        }
+      ]
+    }
+  ]
+}

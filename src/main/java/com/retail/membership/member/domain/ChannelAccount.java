@@ -1,0 +1,79 @@
+package com.retail.membership.member.domain;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.Instant;
+
+/**
+ * 채널 계정 연결.
+ *
+ * <p>통합 회원이 특정 비즈니스 채널(편의점/슈퍼/홈쇼핑/O4O)에 보유한 계정을 나타낸다.
+ * 각 채널 레거시 시스템의 회원번호({@link #channelMemberNo})를 통합 회원에 매핑한다.
+ * 통합 이전 기존 회원 백필 시에도 이 엔티티에 매핑을 적재한다.
+ */
+@Entity
+@Getter
+@Table(
+        name = "channel_account",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_channel_member",
+                columnNames = {"channel", "channel_member_no"}))
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class ChannelAccount {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
+
+    @Column(name = "member_id", length = 36, nullable = false)
+    private String memberId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "channel", length = 20, nullable = false)
+    private Channel channel;
+
+    /** 채널 레거시 시스템의 회원번호(고유). */
+    @Column(name = "channel_member_no", length = 100, nullable = false)
+    private String channelMemberNo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
+    private ChannelAccountStatus status;
+
+    @Column(name = "linked_at", nullable = false, updatable = false)
+    private Instant linkedAt;
+
+    private ChannelAccount(String memberId, Channel channel, String channelMemberNo) {
+        this.memberId = memberId;
+        this.channel = channel;
+        this.channelMemberNo = channelMemberNo;
+        this.status = ChannelAccountStatus.ACTIVE;
+        this.linkedAt = Instant.now();
+    }
+
+    public static ChannelAccount link(String memberId, Channel channel, String channelMemberNo) {
+        return new ChannelAccount(memberId, channel, channelMemberNo);
+    }
+
+    public void unlink() {
+        this.status = ChannelAccountStatus.UNLINKED;
+    }
+
+    /** 채널 계정 연결 상태. */
+    public enum ChannelAccountStatus {
+        ACTIVE,
+        UNLINKED
+    }
+}

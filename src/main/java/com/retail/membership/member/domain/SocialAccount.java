@@ -1,0 +1,67 @@
+package com.retail.membership.member.domain;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import com.retail.membership.auth.social.SocialProvider;
+
+import java.time.Instant;
+
+/**
+ * 소셜 로그인 아이덴티티 연결.
+ *
+ * <p>(provider, providerUserId) 조합이 하나의 통합 회원을 가리킨다. 이 매핑을 통해
+ * "카카오로 로그인한 사용자"를 통합 회원으로 해석한다. 로그인 수단은 비즈니스 채널과
+ * 독립적이므로 별도 엔티티로 분리한다.
+ */
+@Entity
+@Getter
+@Table(
+        name = "social_account",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_social_provider_user",
+                columnNames = {"provider", "provider_user_id"}))
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class SocialAccount {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
+
+    /** 소속 통합 회원 ID. */
+    @Column(name = "member_id", length = 36, nullable = false)
+    private String memberId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "provider", length = 20, nullable = false)
+    private SocialProvider provider;
+
+    /** provider 가 부여한 사용자 고유 ID. */
+    @Column(name = "provider_user_id", length = 100, nullable = false)
+    private String providerUserId;
+
+    @Column(name = "linked_at", nullable = false, updatable = false)
+    private Instant linkedAt;
+
+    private SocialAccount(String memberId, SocialProvider provider, String providerUserId) {
+        this.memberId = memberId;
+        this.provider = provider;
+        this.providerUserId = providerUserId;
+        this.linkedAt = Instant.now();
+    }
+
+    public static SocialAccount link(String memberId, SocialProvider provider, String providerUserId) {
+        return new SocialAccount(memberId, provider, providerUserId);
+    }
+}

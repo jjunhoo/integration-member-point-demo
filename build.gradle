@@ -1,0 +1,65 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.2'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.retail'
+version = '1.0.0'
+
+java {
+    // 통합 멤버십 시스템 - Java 17 기준
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // --- Spring Core ---
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-aop' // 분산 락 AOP
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // --- Security & 인증 (로그인/소셜로그인/JWT) ---
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+    // --- Kafka (EDA) ---
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    // --- Redisson (분산 락 + Redis Cache-Aside 뷰 저장소) ---
+    implementation 'org.redisson:redisson-spring-boot-starter:3.31.0'
+
+    // --- Resilience4j (Consumer Fault Tolerance) ---
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+
+    // --- 직렬화 (도메인 이벤트 JSON) ---
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // --- Runtime / Dev ---
+    runtimeOnly 'com.h2database:h2' // 데모용 인메모리 DB (실제는 MySQL/Oracle 등)
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // --- Test ---
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// AOP 파라미터 바인딩(@annotation) 및 SpEL 파라미터 참조(#command)를 위해
+// 메서드 파라미터명을 클래스 파일에 보존한다.
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.add('-parameters')
+}
