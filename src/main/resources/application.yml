@@ -6,6 +6,18 @@ spring:
     name: membership-service
 
   # ------------------------------------------------------------------
+  # Docker Compose 생명주기 (spring-boot-docker-compose, developmentOnly)
+  # bootRun 시작 시 up → 종료 시 down. 이미 떠 있는 컨테이너가 있으면
+  # Boot 가 up/down 을 건너뛰므로, 수동으로 띄운 경우엔 수동 down 필요.
+  # ------------------------------------------------------------------
+  docker:
+    compose:
+      lifecycle-management: start-and-stop
+      stop:
+        command: down
+        timeout: 1m
+
+  # ------------------------------------------------------------------
   # 데모용 인메모리 DB. 운영 환경에서는 Master DB(MySQL/Oracle)로 교체한다.
   # ------------------------------------------------------------------
   datasource:
