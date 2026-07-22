@@ -46,6 +46,8 @@ dependencies {
 
     // --- Runtime / Dev ---
     runtimeOnly 'com.h2database:h2' // 데모용 인메모리 DB (실제는 MySQL/Oracle 등)
+    // 로컬 bootRun 시 docker-compose(Redis/Kafka)를 앱 생명주기에 묶음 (운영 jar 에는 미포함)
+    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 

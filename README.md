@@ -377,14 +377,15 @@ Master DB 커밋 성공
 ## 실행
 
 ```bash
-# 1) Redis + Kafka
-docker-compose up -d
-
-# 2) 앱 (Java 17)
+# 앱 기동 (Java 17)
+# spring-boot-docker-compose 가 docker-compose.yml 의 Redis/Kafka 를
+# 앱 시작 시 up, 종료 시 down 한다. (별도 docker-compose up 불필요)
 export JAVA_HOME=$(/usr/libexec/java_home -v 17)
 ./gradlew bootRun
-# 또는: gradle bootRun
 ```
+
+> 참고: 컨테이너를 이미 수동으로 띄운 상태면 Boot 는 up/down 을 건너뛴다.
+> 그 경우 종료 후에도 인프라가 남을 수 있으니 `docker compose down` 으로 정리한다.
 
 ### Postman
 
