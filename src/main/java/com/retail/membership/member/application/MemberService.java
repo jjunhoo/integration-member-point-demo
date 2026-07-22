@@ -62,15 +62,35 @@ public class MemberService {
                 SocialAccount.link(member.getId(), userInfo.provider(), userInfo.providerUserId()));
 
         // 로그인한 채널 계정이 없으면 자동 연결 (채널 회원번호는 소셜 식별자 기반으로 합성)
-        String synthesizedChannelNo = userInfo.provider() + ":" + userInfo.providerUserId();
-        if (!channelAccountRepository.existsByMemberIdAndChannel(member.getId(), loginChannel)) {
-            channelAccountRepository.save(
-                    ChannelAccount.link(member.getId(), loginChannel, synthesizedChannelNo));
-        }
+        ensureChannelLinked(member.getId(), loginChannel,
+                userInfo.provider() + ":" + userInfo.providerUserId());
 
         log.info("[Member] 신규 통합 회원 생성 memberId={} provider={} channel={}",
                 member.getId(), userInfo.provider(), loginChannel);
         return member;
+    }
+
+    /**
+     * 로컬 가입용 통합 회원을 생성하고 채널 계정을 연결한다.
+     *
+     * @param channelMemberNo 채널 레거시 회원번호 합성값 (예: LOCAL:demo_user)
+     */
+    @Transactional
+    public IntegratedMember registerLocalMember(String name, String email, Channel loginChannel,
+                                                String channelMemberNo) {
+        IntegratedMember member = IntegratedMember.create(null, name, null, email);
+        memberRepository.save(member);
+        ensureChannelLinked(member.getId(), loginChannel, channelMemberNo);
+        log.info("[Member] 로컬 통합 회원 생성 memberId={} channel={}", member.getId(), loginChannel);
+        return member;
+    }
+
+    /** 해당 채널 계정이 없으면 연결한다. */
+    @Transactional
+    public void ensureChannelLinked(String memberId, Channel channel, String channelMemberNo) {
+        if (!channelAccountRepository.existsByMemberIdAndChannel(memberId, channel)) {
+            channelAccountRepository.save(ChannelAccount.link(memberId, channel, channelMemberNo));
+        }
     }
 
     /**

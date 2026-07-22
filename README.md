@@ -365,6 +365,9 @@ Master DB 커밋 성공
 
 | Method | Path | 인증 | 설명 |
 |---|---|---|---|
+| POST | `/api/v1/auth/register` | 불필요 | 로컬 회원가입 (loginId/password, channel 필수) |
+| POST | `/api/v1/auth/login` | 불필요 | 로컬 로그인 |
+| POST | `/api/v1/auth/password` | Bearer | 비밀번호 변경 (성공 시 refresh 회수) |
 | POST | `/api/v1/auth/social/{provider}` | 불필요 | 소셜 로그인 (kakao/naver/apple) |
 | POST | `/api/v1/auth/refresh` | 불필요 | 토큰 재발급 |
 | POST | `/api/v1/auth/logout` | Bearer | refresh 회수 |

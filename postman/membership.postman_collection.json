@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "통합 멤버십 데모",
-    "description": "통합회원 + 소셜로그인(카카오/네이버/애플) + JWT + 포인트 API 테스트 컬렉션.\n\n사용법:\n1. Collection Variables 의 baseUrl 확인 (기본 http://localhost:8080)\n2. '인증 > 애플 로그인(데모)' 실행 → accessToken/refreshToken 이 컬렉션 변수에 자동 저장됨\n3. '통합회원' 및 '포인트' 요청 실행\n\n참고: 카카오/네이버는 실제 provider access token 이 있어야 200 응답. 애플은 데모 id_token 으로 로컬 테스트 가능.",
+    "description": "통합회원 + 로컬/소셜로그인 + JWT + 포인트 API 테스트 컬렉션.\n\n사용법:\n1. Collection Variables 의 baseUrl 확인 (기본 http://localhost:8080)\n2. '인증 > 로컬 회원가입' 또는 '애플 로그인(데모)' 실행 → accessToken/refreshToken 자동 저장\n3. '통합회원' 및 '포인트' 요청 실행\n\n참고: 카카오/네이버는 실제 provider access token 이 있어야 200 응답. 애플은 데모 id_token 으로 로컬 테스트 가능.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -10,12 +10,94 @@
     { "key": "userId", "value": "postman-user" },
     { "key": "accessToken", "value": "" },
     { "key": "refreshToken", "value": "" },
-    { "key": "appleIdToken", "value": "" }
+    { "key": "appleIdToken", "value": "" },
+    { "key": "loginId", "value": "demo_user" },
+    { "key": "password", "value": "password1" },
+    { "key": "newPassword", "value": "password2" }
   ],
   "item": [
     {
       "name": "인증 (Auth)",
       "item": [
+        {
+          "name": "로컬 회원가입",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function(){ pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', json.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\",\n  \"channel\": \"{{channel}}\",\n  \"email\": \"demo@example.com\",\n  \"name\": \"데모유저\"\n}"
+            }
+          }
+        },
+        {
+          "name": "로컬 로그인",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function(){ pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', json.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\",\n  \"channel\": \"{{channel}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "비밀번호 변경",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', function(){ pm.response.to.have.status(204); });",
+                  "pm.collectionVariables.set('password', pm.collectionVariables.get('newPassword'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/password", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","password"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{password}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}"
+            }
+          }
+        },
         {
           "name": "애플 로그인 (데모 id_token 자동생성)",
           "event": [
