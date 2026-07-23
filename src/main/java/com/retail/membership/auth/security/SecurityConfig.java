@@ -42,6 +42,7 @@ public class SecurityConfig {
         http
                 // JWT 사용 → CSRF/폼로그인/기본인증/세션 모두 비활성
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> {})
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
