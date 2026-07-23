@@ -380,11 +380,17 @@ Master DB 커밋 성공
 ## 실행
 
 ```bash
-# 앱 기동 (Java 17)
+# 1) 백엔드 (Java 17)
 # spring-boot-docker-compose 가 docker-compose.yml 의 Redis/Kafka 를
 # 앱 시작 시 up, 종료 시 down 한다. (별도 docker-compose up 불필요)
 export JAVA_HOME=$(/usr/libexec/java_home -v 17)
 ./gradlew bootRun
+
+# 2) 프론트 (Vue 3 + Vite) — 다른 터미널
+cd frontend
+npm install
+npm run dev
+# http://localhost:5173
 ```
 
 > 참고: 컨테이너를 이미 수동으로 띄운 상태면 Boot 는 up/down 을 건너뛴다.

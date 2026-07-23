@@ -24,3 +24,7 @@ Thumbs.db
 application-local.yml
 application-local.yaml
 **/local.properties
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
