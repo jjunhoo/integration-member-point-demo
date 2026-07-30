@@ -39,7 +39,7 @@ public class NaverOAuthClient {
     public String buildAuthorizeUrl(String state) {
         requireConfigured();
         return UriComponentsBuilder
-                .fromHttpUrl(naver.authorizeUri())
+                .fromUriString(naver.authorizeUri())
                 .queryParam("response_type", "code")
                 .queryParam("client_id", naver.clientId())
                 .queryParam("redirect_uri", naver.redirectUri())

@@ -93,12 +93,23 @@ public class MembershipCommandService {
     }
 
     /**
-     * 유저의 lot 목록(만료·잔여 포함). 조회 시 lazy expire 도 적용한다.
+     * 유저의 lot 목록(만료·잔여 포함). 조회 시 lazy expire 를 적용하고,
+     * 만료분이 있으면 Redis 뷰 동기화를 위해 이벤트를 발행한다.
      */
+    @DistributedLock(
+            key = "'point:' + #userId",
+            waitTime = 3000L,
+            leaseTime = 5000L,
+            timeUnit = TimeUnit.MILLISECONDS)
     @Transactional
     public List<PointLot> listLots(String userId) {
         Instant now = Instant.now();
-        membershipRepository.findById(userId).ifPresent(membership -> expireStaleLots(membership, now));
+        membershipRepository.findById(userId).ifPresent(membership -> {
+            long expired = expireStaleLots(membership, now);
+            if (expired > 0) {
+                publishAfterCommit(membership, MembershipEventType.POINT_EXPIRED, expired);
+            }
+        });
         return pointLotRepository.findByUserIdOrderByExpiresAtAscEarnedAtAsc(userId);
     }
 
@@ -127,7 +138,8 @@ public class MembershipCommandService {
         }
     }
 
-    private void expireStaleLots(Membership membership, Instant now) {
+    /** @return 이번에 만료 처리한 금액 (없으면 0) */
+    private long expireStaleLots(Membership membership, Instant now) {
         List<PointLot> expired = pointLotRepository
                 .findByUserIdAndRemainingAmountGreaterThanAndExpiresAtLessThanEqual(
                         membership.getUserId(), 0L, now);
@@ -140,6 +152,7 @@ public class MembershipCommandService {
             log.info("[Command] 만료 포인트 정리 userId={} expiredAmount={} balance={}",
                     membership.getUserId(), expiredTotal, membership.getPointBalance());
         }
+        return expiredTotal;
     }
 
     private Instant resolveExpiresAt(Instant requested, Instant earnedAt) {

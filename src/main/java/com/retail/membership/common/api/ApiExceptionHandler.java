@@ -1,6 +1,7 @@
 package com.retail.membership.common.api;
 
 import com.retail.membership.auth.social.SocialAuthException;
+import com.retail.membership.common.lock.LockAcquisitionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -18,6 +19,18 @@ public class ApiExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+    }
+
+    /** 잔액 부족 등 비즈니스 상태 오류. */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalState(IllegalStateException e) {
+        return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+    }
+
+    @ExceptionHandler(LockAcquisitionException.class)
+    public ResponseEntity<Map<String, String>> handleLockAcquisition(LockAcquisitionException e) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(Map.of("message", e.getMessage()));
     }
 
     @ExceptionHandler(SocialAuthException.class)

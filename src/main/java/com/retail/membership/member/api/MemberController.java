@@ -2,7 +2,6 @@ package com.retail.membership.member.api;
 
 import com.retail.membership.auth.security.MemberPrincipal;
 import com.retail.membership.member.application.MemberService;
-import com.retail.membership.member.domain.ChannelAccount;
 import com.retail.membership.member.domain.IntegratedMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -56,7 +55,7 @@ public class MemberController {
     public ResponseEntity<MemberResponse> linkChannel(
             @AuthenticationPrincipal MemberPrincipal principal,
             @Valid @RequestBody LinkChannelRequest request) {
-        ChannelAccount linked = memberService.linkChannelAccount(
+        memberService.linkChannelAccount(
                 principal.memberId(), request.channel(), request.channelMemberNo());
         IntegratedMember member = memberService.getMember(principal.memberId());
         var channels = memberService.getChannelAccounts(principal.memberId());
