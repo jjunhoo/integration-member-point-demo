@@ -7,10 +7,12 @@ package com.retail.membership.auth.social;
  */
 public class SocialAuthException extends RuntimeException {
 
+    /** 메시지만 담는 소셜 인증 실패 예외를 생성한다. */
     public SocialAuthException(String message) {
         super(message);
     }
 
+    /** 원인 예외를 포함한 소셜 인증 실패 예외를 생성한다. */
     public SocialAuthException(String message, Throwable cause) {
         super(message, cause);
     }

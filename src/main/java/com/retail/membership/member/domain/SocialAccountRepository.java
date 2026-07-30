@@ -10,5 +10,6 @@ import java.util.Optional;
  */
 public interface SocialAccountRepository extends JpaRepository<SocialAccount, Long> {
 
+    /** provider와 provider 사용자 ID로 소셜 계정을 조회한다. */
     Optional<SocialAccount> findByProviderAndProviderUserId(SocialProvider provider, String providerUserId);
 }

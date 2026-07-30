@@ -25,26 +25,33 @@ import java.time.Instant;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PointLot {
 
+    /** PK. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
+    /** 적립 대상 유저(멤버십) ID. */
     @Column(name = "user_id", nullable = false, length = 100)
     private String userId;
 
+    /** 최초 적립 금액 (이후 변경되지 않음). */
     @Column(name = "original_amount", nullable = false)
     private long originalAmount;
 
+    /** 아직 사용·만료되지 않은 잔여 금액. */
     @Column(name = "remaining_amount", nullable = false)
     private long remainingAmount;
 
+    /** 적립 시각. FEFO 동률 시 정렬 키로도 사용. */
     @Column(name = "earned_at", nullable = false, updatable = false)
     private Instant earnedAt;
 
+    /** 만료 시각. 이 시각 이후에는 사용 불가(lazy expire). */
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
+    /** 적립 lot 내부 생성자. 원금과 잔여 금액을 동일하게 설정한다. */
     private PointLot(String userId, long amount, Instant earnedAt, Instant expiresAt) {
         this.userId = userId;
         this.originalAmount = amount;
@@ -53,6 +60,10 @@ public class PointLot {
         this.expiresAt = expiresAt;
     }
 
+    /**
+     * 포인트 적립 lot 을 생성한다.
+     * 금액·만료일 유효성을 검증한 뒤 새 lot 을 반환한다.
+     */
     public static PointLot earn(String userId, long amount, Instant earnedAt, Instant expiresAt) {
         if (amount <= 0) {
             throw new IllegalArgumentException("적립 금액은 0보다 커야 합니다. amount=" + amount);
@@ -63,10 +74,12 @@ public class PointLot {
         return new PointLot(userId, amount, earnedAt, expiresAt);
     }
 
+    /** 주어진 시각에 잔여가 있고 만료되지 않았으면 사용 가능하다. */
     public boolean isUsableAt(Instant now) {
         return remainingAmount > 0 && expiresAt.isAfter(now);
     }
 
+    /** 주어진 시각에 잔여가 있으나 만료된 lot 인지 판별한다. */
     public boolean isExpiredAt(Instant now) {
         return remainingAmount > 0 && !expiresAt.isAfter(now);
     }

@@ -135,6 +135,14 @@ public class MembershipCommandService {
         return pointLotRepository.findByUserIdOrderByExpiresAtAscEarnedAtAsc(userId);
     }
 
+    /**
+     * FEFO(만료 임박 → 적립 순)로 사용 가능 lot 의 remaining 을 깎고
+     * 동일 {@code deductTxId} 로 {@link PointUsage} 이력을 남긴다.
+     *
+     * @param userId 대상 유저
+     * @param amount 차감할 총액
+     * @param now    기준 시각 (만료 판정)
+     */
     private void burnLotsFefo(String userId, long amount, Instant now) {
         List<PointLot> lots = pointLotRepository
                 .findByUserIdAndRemainingAmountGreaterThanAndExpiresAtAfterOrderByExpiresAtAscEarnedAtAsc(
@@ -160,7 +168,11 @@ public class MembershipCommandService {
         }
     }
 
-    /** @return 이번에 만료 처리한 금액 (없으면 0) */
+    /**
+     * 만료된 lot 의 잔여를 0으로 만들고 membership 잔액에서 차감한다.
+     *
+     * @return 이번에 만료 처리한 금액 (없으면 0)
+     */
     private long expireStaleLots(Membership membership, Instant now) {
         List<PointLot> expired = pointLotRepository
                 .findByUserIdAndRemainingAmountGreaterThanAndExpiresAtLessThanEqual(
@@ -177,6 +189,12 @@ public class MembershipCommandService {
         return expiredTotal;
     }
 
+    /**
+     * 적립 lot 만료일을 결정한다. 요청값이 없으면 적립 시각 + 1년.
+     *
+     * @param requested 클라이언트가 넘긴 만료 시각 (nullable)
+     * @param earnedAt  적립 시각
+     */
     private Instant resolveExpiresAt(Instant requested, Instant earnedAt) {
         if (requested == null) {
             return earnedAt.plus(DEFAULT_EXPIRE_YEARS, ChronoUnit.YEARS);
@@ -187,11 +205,16 @@ public class MembershipCommandService {
         return requested;
     }
 
+    /** 멤버십이 없으면 신규 생성(잔액 0) 후 반환한다. */
     private Membership getOrCreate(String userId) {
         return membershipRepository.findById(userId)
                 .orElseGet(() -> membershipRepository.save(new Membership(userId)));
     }
 
+    /**
+     * 변경 후 스냅샷을 담은 도메인 이벤트를 스프링으로 발행한다.
+     * 실제 Kafka 전송은 커밋 이후 {@code MembershipEventPublisher} 가 수행한다.
+     */
     private void publishAfterCommit(Membership membership, MembershipEventType type, long amount) {
         MembershipDomainEvent event = MembershipDomainEvent.of(
                 membership.getUserId(),

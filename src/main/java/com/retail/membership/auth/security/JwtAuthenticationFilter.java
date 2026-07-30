@@ -33,6 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider tokenProvider;
 
+    /** Bearer access token을 검증해 SecurityContext에 인증을 설정한다. */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -54,6 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /** JWT 클레임에서 principal과 권한을 만들어 SecurityContext에 넣는다. */
     @SuppressWarnings("unchecked")
     private void setAuthentication(HttpServletRequest request, Claims claims) {
         String memberId = claims.getSubject();
@@ -73,6 +75,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
+    /** Authorization 헤더에서 Bearer 토큰 문자열을 추출한다. */
     private String resolveToken(HttpServletRequest request) {
         String bearer = request.getHeader("Authorization");
         if (StringUtils.hasText(bearer) && bearer.startsWith(BEARER_PREFIX)) {

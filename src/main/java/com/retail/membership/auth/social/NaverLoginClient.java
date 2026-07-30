@@ -21,16 +21,19 @@ public class NaverLoginClient implements SocialLoginClient {
     private final RestClient restClient;
     private final String userInfoUri;
 
+    /** 네이버 사용자 정보 API URI로 RestClient를 초기화한다. */
     public NaverLoginClient(SocialLoginProperties properties) {
         this.userInfoUri = properties.naver().userInfoUri();
         this.restClient = RestClient.create();
     }
 
+    /** {@inheritDoc} */
     @Override
     public SocialProvider provider() {
         return SocialProvider.NAVER;
     }
 
+    /** access token으로 네이버 사용자 정보 API를 호출한다. */
     @Override
     @SuppressWarnings("unchecked")
     public SocialUserInfo fetchUserInfo(String accessToken) {

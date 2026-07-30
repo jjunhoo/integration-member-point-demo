@@ -56,6 +56,7 @@ public class MemberService {
                 .orElseGet(() -> registerNewMember(userInfo));
     }
 
+    /** 소셜 프로필로 통합 회원과 소셜 계정 매핑을 신규 생성한다. */
     private IntegratedMember registerNewMember(SocialUserInfo userInfo) {
         // 실서비스에서는 소셜 프로필만으로 CI 를 알 수 없으므로, 본인확인 완료 후 CI 를 채운다.
         // 데모에서는 CI 미보유(null) 상태의 통합 회원으로 생성한다.

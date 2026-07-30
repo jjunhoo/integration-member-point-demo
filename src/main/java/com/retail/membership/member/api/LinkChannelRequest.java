@@ -6,11 +6,11 @@ import jakarta.validation.constraints.NotNull;
 
 /**
  * <p><b>용도:</b> 채널 계정 연결 API 요청 DTO.</p>
- *
- * 채널 계정 연결 요청.
  */
 public record LinkChannelRequest(
+        /** 연결할 비즈니스 채널. */
         @NotNull Channel channel,
+        /** 채널 레거시 회원번호. */
         @NotBlank String channelMemberNo
 ) {
 }

@@ -16,6 +16,7 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
+    /** 로컬 Vue 개발 서버 origin에 대한 CORS 설정을 등록한다. */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();

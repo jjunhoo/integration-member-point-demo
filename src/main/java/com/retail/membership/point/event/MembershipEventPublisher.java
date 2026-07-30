@@ -28,6 +28,7 @@ public class MembershipEventPublisher {
     private final MembershipEventProducer eventProducer;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    /** Master DB 커밋 후 도메인 이벤트를 Kafka 발행으로 전달한다. */
     public void onDomainEvent(MembershipDomainEvent event) {
         log.debug("[AFTER_COMMIT] 커밋 확인 → Kafka 발행 트리거 eventId={} userId={}",
                 event.eventId(), event.userId());

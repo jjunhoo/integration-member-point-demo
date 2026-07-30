@@ -25,6 +25,7 @@ public class RedissonConfig {
     @Value("${redisson.address}")
     private String address;
 
+    /** 분산 락·Redis 뷰용 RedissonClient 빈을 생성한다. */
     @Bean(destroyMethod = "shutdown")
     public RedissonClient redissonClient() {
         // Redisson 코덱용 ObjectMapper. JavaTimeModule 을 등록해야

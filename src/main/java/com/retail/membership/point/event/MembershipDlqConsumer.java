@@ -26,6 +26,10 @@ public class MembershipDlqConsumer {
             topics = "${retail.membership.kafka.dlq-topic}",
             groupId = "membership-dlq-monitor",
             containerFactory = "membershipKafkaListenerContainerFactory")
+    /**
+     * DLQ 에 적재된 실패 메시지를 수신·로깅한다.
+     * 모니터링 목적이므로 수신 후 오프셋을 커밋한다.
+     */
     public void consumeDlq(ConsumerRecord<String, String> record,
                            Acknowledgment acknowledgment,
                            @Header(name = KafkaHeaders.DLT_EXCEPTION_MESSAGE, required = false) String exceptionMessage,

@@ -20,11 +20,13 @@ public class SocialLoginClientRegistry {
 
     private final Map<SocialProvider, SocialLoginClient> clients;
 
+    /** 주입된 SocialLoginClient 목록을 provider 기준으로 색인한다. */
     public SocialLoginClientRegistry(List<SocialLoginClient> clientList) {
         this.clients = clientList.stream()
                 .collect(Collectors.toMap(SocialLoginClient::provider, Function.identity()));
     }
 
+    /** provider에 해당하는 소셜 로그인 클라이언트를 반환한다. */
     public SocialLoginClient get(SocialProvider provider) {
         SocialLoginClient client = clients.get(provider);
         if (client == null) {

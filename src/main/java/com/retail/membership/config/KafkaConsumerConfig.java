@@ -38,6 +38,7 @@ public class KafkaConsumerConfig {
     @Value("${retail.membership.kafka.dlq-topic}")
     private String dlqTopic;
 
+    /** 수동 커밋·문자열 역직렬화를 사용하는 Kafka ConsumerFactory를 생성한다. */
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
         Map<String, Object> props = new HashMap<>();

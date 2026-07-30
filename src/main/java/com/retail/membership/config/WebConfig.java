@@ -14,9 +14,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
+    /** URL path의 소셜 provider 문자열을 {@link SocialProvider} enum으로 변환한다. */
     @Override
     public void addFormatters(FormatterRegistry registry) {
         registry.addConverter(new Converter<String, SocialProvider>() {
+            /** 대소문자를 무시하고 SocialProvider enum 값으로 변환한다. */
             @Override
             public SocialProvider convert(String source) {
                 return SocialProvider.valueOf(source.trim().toUpperCase());

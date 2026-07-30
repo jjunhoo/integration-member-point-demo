@@ -22,6 +22,7 @@ import org.springframework.retry.annotation.EnableRetry;
 @SpringBootApplication
 public class MembershipApplication {
 
+    /** Spring Boot 애플리케이션을 기동한다. */
     public static void main(String[] args) {
         SpringApplication.run(MembershipApplication.class, args);
     }

@@ -50,6 +50,9 @@ public class Membership {
     @Column(name = "version", nullable = false)
     private long version;
 
+    /**
+     * 신규 멤버십을 생성한다. 잔액·누적 포인트는 0, 등급은 WELCOME 으로 초기화한다.
+     */
     public Membership(String userId) {
         this.userId = userId;
         this.pointBalance = 0L;
@@ -80,10 +83,12 @@ public class Membership {
         this.pointBalance -= amount;
     }
 
+    /** 누적 포인트 기준으로 등급을 재산정한다. */
     private void recalculateGrade() {
         this.grade = MembershipGrade.of(this.totalAccumulatedPoint);
     }
 
+    /** 포인트 금액이 양수인지 검증한다. */
     private void validatePositive(long amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("포인트 금액은 0보다 커야 합니다. amount=" + amount);

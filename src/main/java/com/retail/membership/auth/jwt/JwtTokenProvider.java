@@ -34,6 +34,7 @@ public class JwtTokenProvider {
     private final JwtProperties properties;
     private final SecretKey key;
 
+    /** 설정의 시크릿으로 HS256 서명 키를 초기화한다. */
     public JwtTokenProvider(JwtProperties properties) {
         this.properties = properties;
         // HS256: 시크릿은 최소 256bit(32byte) 이상이어야 한다.
@@ -49,6 +50,7 @@ public class JwtTokenProvider {
         return new TokenPair(access, refresh, properties.accessTokenValiditySeconds());
     }
 
+    /** 지정 타입·만료 시간으로 JWT 문자열을 생성한다. */
     private String build(String memberId, String channel, List<String> roles,
                          TokenType type, long validitySeconds) {
         Instant now = Instant.now();

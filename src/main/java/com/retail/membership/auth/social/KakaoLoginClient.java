@@ -22,16 +22,19 @@ public class KakaoLoginClient implements SocialLoginClient {
     private final RestClient restClient;
     private final String userInfoUri;
 
+    /** 카카오 사용자 정보 API URI로 RestClient를 초기화한다. */
     public KakaoLoginClient(SocialLoginProperties properties) {
         this.userInfoUri = properties.kakao().userInfoUri();
         this.restClient = RestClient.create();
     }
 
+    /** {@inheritDoc} */
     @Override
     public SocialProvider provider() {
         return SocialProvider.KAKAO;
     }
 
+    /** access token으로 카카오 사용자 정보 API를 호출한다. */
     @Override
     @SuppressWarnings("unchecked")
     public SocialUserInfo fetchUserInfo(String accessToken) {

@@ -9,6 +9,7 @@ package com.retail.membership.point.event;
  */
 public class MembershipEventProcessingException extends RuntimeException {
 
+    /** 원인 예외를 포함해 이벤트 처리 실패를 나타낸다. */
     public MembershipEventProcessingException(String message, Throwable cause) {
         super(message, cause);
     }

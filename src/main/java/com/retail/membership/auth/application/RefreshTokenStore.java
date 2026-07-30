@@ -25,6 +25,7 @@ public class RefreshTokenStore {
 
     private final RedissonClient redissonClient;
 
+    /** 회원별 refresh 토큰을 Redis에 TTL과 함께 저장한다. */
     public void save(String memberId, String refreshToken, long ttlSeconds) {
         bucket(memberId).set(refreshToken, Duration.ofSeconds(ttlSeconds));
     }
@@ -35,10 +36,12 @@ public class RefreshTokenStore {
         return stored != null && stored.equals(refreshToken);
     }
 
+    /** 회원의 refresh 토큰을 Redis에서 삭제(회수)한다. */
     public void revoke(String memberId) {
         bucket(memberId).delete();
     }
 
+    /** 회원 ID 기준 Redis 버킷을 반환한다. */
     private RBucket<String> bucket(String memberId) {
         return redissonClient.getBucket(KEY_PREFIX + memberId, StringCodec.INSTANCE);
     }

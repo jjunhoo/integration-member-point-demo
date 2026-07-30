@@ -47,6 +47,7 @@ public class OAuthStateStore {
         return true;
     }
 
+    /** state 값 기준 Redis 버킷을 반환한다. */
     private RBucket<String> bucket(String state) {
         return redissonClient.getBucket(KEY_PREFIX + state, StringCodec.INSTANCE);
     }

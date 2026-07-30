@@ -18,6 +18,7 @@ import java.util.Map;
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
+    /** 잘못된 인자·요청 값 오류를 400 응답으로 변환한다. */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
@@ -29,17 +30,20 @@ public class ApiExceptionHandler {
         return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
     }
 
+    /** 분산 락 획득 실패를 429 응답으로 변환한다. */
     @ExceptionHandler(LockAcquisitionException.class)
     public ResponseEntity<Map<String, String>> handleLockAcquisition(LockAcquisitionException e) {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .body(Map.of("message", e.getMessage()));
     }
 
+    /** 소셜 로그인 인증 실패를 401 응답으로 변환한다. */
     @ExceptionHandler(SocialAuthException.class)
     public ResponseEntity<Map<String, String>> handleSocialAuth(SocialAuthException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", e.getMessage()));
     }
 
+    /** Bean Validation 실패를 첫 번째 필드 오류 메시지로 400 응답한다. */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldErrors().stream()

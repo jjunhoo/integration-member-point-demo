@@ -23,11 +23,13 @@ public class NaverOAuthClient {
     private final SocialLoginProperties.Naver naver;
     private final RestClient restClient;
 
+    /** 네이버 OAuth 설정으로 RestClient를 초기화한다. */
     public NaverOAuthClient(SocialLoginProperties properties) {
         this.naver = properties.naver();
         this.restClient = RestClient.create();
     }
 
+    /** clientId·clientSecret·redirectUri 설정이 있는지 확인한다. */
     public void requireConfigured() {
         if (!StringUtils.hasText(naver.clientId()) || !StringUtils.hasText(naver.clientSecret())) {
             throw new SocialAuthException(
@@ -38,6 +40,7 @@ public class NaverOAuthClient {
         }
     }
 
+    /** CSRF state를 포함한 네이버 OAuth 인가 URL을 생성한다. */
     public String buildAuthorizeUrl(String state) {
         requireConfigured();
         return UriComponentsBuilder
@@ -51,6 +54,7 @@ public class NaverOAuthClient {
                 .toUriString();
     }
 
+    /** 인가 code와 state로 네이버 access token을 교환한다. */
     @SuppressWarnings("unchecked")
     public String exchangeCodeForAccessToken(String code, String state) {
         requireConfigured();

@@ -20,12 +20,14 @@ public class KafkaTopicConfig {
     @Value("${retail.membership.kafka.dlq-topic}")
     private String dlqTopic;
 
+    /** 멤버십 도메인 이벤트 토픽을 생성한다. */
     @Bean
     public NewTopic domainEventTopic() {
         // 동일 유저 순서 보장을 위해 파티션 키(userId)를 사용하므로 파티션 수는 처리량에 맞춰 설정
         return TopicBuilder.name(domainEventTopic).partitions(3).replicas(1).build();
     }
 
+    /** 처리 실패 이벤트를 수신하는 DLQ 토픽을 생성한다. */
     @Bean
     public NewTopic dlqTopic() {
         return TopicBuilder.name(dlqTopic).partitions(3).replicas(1).build();

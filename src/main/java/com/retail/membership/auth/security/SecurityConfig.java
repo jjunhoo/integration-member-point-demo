@@ -33,11 +33,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableConfigurationProperties({JwtProperties.class, SocialLoginProperties.class})
 public class SecurityConfig {
 
+    /** JWT 인증 필터 빈을 등록한다. */
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenProvider tokenProvider) {
         return new JwtAuthenticationFilter(tokenProvider);
     }
 
+    /** Stateless JWT 기반 Security 필터 체인을 구성한다. */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {

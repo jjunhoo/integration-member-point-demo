@@ -9,5 +9,6 @@ import java.util.Optional;
  */
 public interface IntegratedMemberRepository extends JpaRepository<IntegratedMember, String> {
 
+    /** CI(본인확인 연계정보)로 통합 회원을 조회한다. */
     Optional<IntegratedMember> findByCi(String ci);
 }
