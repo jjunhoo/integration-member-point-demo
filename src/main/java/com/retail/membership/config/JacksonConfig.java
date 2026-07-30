@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * <p><b>용도:</b> Java time(Instant 등) JSON 직렬화를 위한 Jackson 모듈 등록.</p>
+ *
  * Jackson 설정. 도메인 이벤트의 {@code Instant}(java.time) 직렬화를 지원한다.
  */
 @Configuration

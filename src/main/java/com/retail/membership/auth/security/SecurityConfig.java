@@ -18,6 +18,8 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
+ * <p><b>용도:</b> Spring Security 필터 체인·공개 경로·JWT 필터·PasswordEncoder 설정.</p>
+ *
  * Spring Security 설정 (Stateless JWT 기반).
  *
  * <ul>

@@ -15,6 +15,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
+ * <p><b>용도:</b> JWT(HS256) 발급·파싱·타입 검증을 수행하는 컴포넌트.</p>
+ *
  * JWT 발급/검증 provider (HS256).
  *
  * <p>토큰 클레임:

@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 
 /**
+ * <p><b>용도:</b> 데모용 Kafka 토픽(도메인 이벤트/DLQ) 자동 생성 설정.</p>
+ *
  * 데모용 토픽 자동 생성. (운영에서는 인프라(IaC)로 사전 프로비저닝하는 것이 일반적)
  */
 @Configuration

@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
+ * <p><b>용도:</b> 인증 HTTP API 진입점. 로컬/소셜/네이버 OAuth 로그인과 JWT 발급·갱신·로그아웃을 노출한다.</p>
+ *
  * 인증 API 컨트롤러.
  *
  * <p>로컬(loginId/password) · 네이버 OAuth · 소셜 access-token 로그인과

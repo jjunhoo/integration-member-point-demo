@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * <p><b>용도:</b> 분산 락·Redis 뷰에 쓰는 RedissonClient 빈 구성.</p>
+ *
  * Redisson 클라이언트 설정.
  *
  * <p>분산 락(RLock)과 Cache-Aside 뷰(RBucket)를 모두 이 클라이언트로 사용한다.

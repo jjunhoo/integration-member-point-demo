@@ -9,6 +9,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 /**
+ * <p><b>용도:</b> 로컬 Vue(Vite) origin 의 CORS 를 허용하는 웹 설정.</p>
+ *
  * 로컬 Vue 개발 서버(Vite) CORS 허용.
  */
 @Configuration

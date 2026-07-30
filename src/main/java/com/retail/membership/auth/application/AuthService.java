@@ -27,8 +27,17 @@ import java.util.List;
 /**
  * 인증 애플리케이션 서비스.
  *
- * <p>소셜/로컬 로그인 → 통합 회원 해석 → JWT 발급의 오케스트레이션을 담당한다.
- * refresh 토큰 재발급/로그아웃(회수)/비밀번호 변경도 처리한다.
+ * <p><b>용도:</b> 로그인/회원가입부터 JWT 발급·갱신·로그아웃까지 인증 유스케이스를 오케스트레이션한다.
+ * 회원 엔티티 생성 자체는 {@link MemberService} 에 위임하고, 이 서비스는 자격증명 검증과 토큰 생명주기에 집중한다.
+ *
+ * <h3>주요 책임</h3>
+ * <ul>
+ *   <li>로컬 가입/로그인 ({@code LocalCredential} + BCrypt)</li>
+ *   <li>네이버 OAuth 인가 코드 로그인 (state 검증 → 토큰 교환 → 프로필)</li>
+ *   <li>소셜 access-token 직접 로그인 (카카오/네이버/애플 클라이언트 레지스트리)</li>
+ *   <li>access/refresh JWT 발급 및 Redis refresh 저장·회수·회전</li>
+ *   <li>비밀번호 변경 후 refresh 강제 폐기</li>
+ * </ul>
  */
 @Slf4j
 @Service
@@ -62,7 +71,11 @@ public class AuthService {
         return issueAndStore(member.getId(), null);
     }
 
-    /** 네이버 인가 URL + state 발급. */
+    /**
+     * 네이버 OAuth 인가 URL + CSRF 방지용 state 발급.
+     *
+     * <p>state 는 Redis 에 짧게 보관되며, 콜백 로그인 시 1회 소비된다.
+     */
     public NaverAuthorizeUrlResponse createNaverAuthorizeUrl() {
         String state = oAuthStateStore.issue(SocialProvider.NAVER.name());
         String authorizeUrl = naverOAuthClient.buildAuthorizeUrl(state);
@@ -157,6 +170,7 @@ public class AuthService {
         refreshTokenStore.revoke(memberId);
     }
 
+    /** access/refresh 발급 후 refresh 를 Redis 에 저장한다. */
     private TokenPair issueAndStore(String memberId, String channel) {
         TokenPair pair = tokenProvider.issue(memberId, channel, DEFAULT_ROLES);
         refreshTokenStore.save(memberId, pair.refreshToken(),

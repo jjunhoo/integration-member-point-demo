@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Positive;
 import java.time.Instant;
 
 /**
+ * <p><b>용도:</b> 포인트 적립/차감 API·서비스에 넘기는 커맨드 DTO.</p>
+ *
  * 포인트 적립/차감 커맨드 DTO.
  *
  * @param userId    유저(멤버십 카드) 식별자

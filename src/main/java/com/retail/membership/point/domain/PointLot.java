@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 /**
+ * <p><b>용도:</b> 만료일을 가진 포인트 적립 묶음(lot) 엔티티.</p>
+ *
  * 포인트 적립 묶음(lot).
  *
  * <p>차감은 FEFO(만료 임박 우선)로 이 lot 들의 {@link #remainingAmount} 를 깎는다.

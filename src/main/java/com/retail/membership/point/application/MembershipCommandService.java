@@ -23,10 +23,21 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 멤버십 Command 서비스 (CQRS의 쓰기 측).
+ * 멤버십 포인트 Command 서비스 (CQRS 쓰기 측).
  *
- * <p>포인트는 lot 단위로 적립되고, 차감은 FEFO(만료 임박 우선)로 lot remaining 을 깎는다.
- * {@code membership.point_balance} 는 사용 가능 잔액 요약이다.
+ * <p><b>용도:</b> 포인트 적립·차감·만료 정리와 lot/usage 원장 갱신을 담당한다.
+ * 조회 뷰(Redis)는 직접 쓰지 않고, 커밋 후 도메인 이벤트로 동기화한다.
+ *
+ * <h3>주요 책임</h3>
+ * <ul>
+ *   <li>적립: {@code point_lot} 생성 + {@code membership} 잔액/누적/등급 갱신</li>
+ *   <li>차감: FEFO(만료 임박 우선)로 lot remaining 차감 + {@code point_usage} 기록</li>
+ *   <li>lazy 만료: 만료 lot 잔여 정리 및 잔액 반영 ({@code POINT_EXPIRED} 이벤트)</li>
+ *   <li>동시성: {@code @DistributedLock} 으로 동일 userId 요청 직렬화</li>
+ *   <li>이벤트: 트랜잭션 커밋 이후 Kafka 발행을 위한 스프링 이벤트 예약</li>
+ * </ul>
+ *
+ * <p>{@code membership.point_balance} 는 사용 가능 lot 잔여 합의 요약 컬럼이다.
  */
 @Slf4j
 @Service
@@ -40,6 +51,12 @@ public class MembershipCommandService {
     private final PointUsageRepository pointUsageRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    /**
+     * 포인트 적립.
+     *
+     * <p>만료 lot 정리 후 새 lot 을 만들고 잔액/누적/등급을 올린다.
+     * {@code expiresAt} 미지정 시 적립 시각 + 1년.
+     */
     @DistributedLock(
             key = "'point:' + #command.userId()",
             waitTime = 3000L,
@@ -63,6 +80,11 @@ public class MembershipCommandService {
         publishAfterCommit(membership, MembershipEventType.POINT_ACCUMULATED, command.amount());
     }
 
+    /**
+     * 포인트 차감(사용).
+     *
+     * <p>만료 정리 → 잔액 검증 → FEFO lot 소진 → usage 기록 → 잔액 차감 순으로 처리한다.
+     */
     @DistributedLock(
             key = "'point:' + #command.userId()",
             waitTime = 3000L,

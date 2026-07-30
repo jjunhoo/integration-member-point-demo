@@ -10,6 +10,8 @@ import java.time.Duration;
 import java.util.UUID;
 
 /**
+ * <p><b>용도:</b> OAuth CSRF 방지용 state 를 Redis 에 발급·1회 소비하는 저장소.</p>
+ *
  * OAuth state 저장소 (Redis). CSRF 방지용 일회성 값.
  */
 @Component

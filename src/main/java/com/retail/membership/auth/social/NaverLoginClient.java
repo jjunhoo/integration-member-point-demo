@@ -8,6 +8,8 @@ import org.springframework.web.client.RestClient;
 import java.util.Map;
 
 /**
+ * <p><b>용도:</b> 네이버 access token 으로 사용자 정보를 조회하는 SocialLoginClient 구현.</p>
+ *
  * 네이버 로그인 연동.
  *
  * <p>네이버 사용자 정보는 {@code response} 객체 안에 감싸여 반환된다.

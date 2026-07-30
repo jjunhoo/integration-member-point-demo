@@ -9,6 +9,8 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 /**
+ * <p><b>용도:</b> 처리 실패 이벤트를 DLQ 에서 모니터링/로깅하는 Kafka 컨슈머.</p>
+ *
  * Dead Letter Queue(DLQ) Consumer.
  *
  * <p>정상 Consumer 가 재시도까지 소진하고도 처리에 실패한 메시지는

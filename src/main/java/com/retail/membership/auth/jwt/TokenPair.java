@@ -1,6 +1,8 @@
 package com.retail.membership.auth.jwt;
 
 /**
+ * <p><b>용도:</b> 발급된 accessToken/refreshToken 쌍을 담는 값 객체.</p>
+ *
  * 발급된 access/refresh 토큰 쌍.
  *
  * @param accessToken            API 인증용 단기 토큰

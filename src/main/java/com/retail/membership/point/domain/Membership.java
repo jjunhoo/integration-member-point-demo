@@ -12,6 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
+ * <p><b>용도:</b> 유저별 포인트 잔액·누적·등급을 담는 멤버십 Master 엔티티.</p>
+ *
  * 통합 멤버십 애그리거트 (Master DB 엔티티).
  *
  * <p>포인트 잔액/누적 및 등급을 보유한다. 실제 적립 단위는 {@link PointLot} 이며,

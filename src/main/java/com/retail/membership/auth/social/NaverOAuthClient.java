@@ -12,6 +12,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.Map;
 
 /**
+ * <p><b>용도:</b> 네이버 인가 코드→access token 교환과 인가 URL 생성을 담당한다.</p>
+ *
  * 네이버 OAuth2 인가 코드 → access token 교환.
  */
 @Slf4j

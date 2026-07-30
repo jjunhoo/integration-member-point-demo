@@ -8,6 +8,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
+ * <p><b>용도:</b> SocialProvider → SocialLoginClient 빈을 찾아주는 레지스트리.</p>
+ *
  * provider → {@link SocialLoginClient} 조회 레지스트리.
  *
  * <p>스프링이 주입한 모든 {@link SocialLoginClient} 빈을 provider 기준으로 색인한다.

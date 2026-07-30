@@ -6,6 +6,8 @@ import java.util.UUID;
 import com.retail.membership.point.domain.MembershipGrade;
 
 /**
+ * <p><b>용도:</b> Kafka 로 전파되는 멤버십 포인트 도메인 이벤트 페이로드.</p>
+ *
  * 멤버십 도메인 이벤트 (Kafka 페이로드).
  *
  * <p>토픽 {@code membership.domain-event.v1} 로 발행되며, Query 측

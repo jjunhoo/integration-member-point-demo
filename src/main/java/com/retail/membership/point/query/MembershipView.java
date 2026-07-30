@@ -6,6 +6,8 @@ import java.time.Instant;
 import com.retail.membership.point.domain.MembershipGrade;
 
 /**
+ * <p><b>용도:</b> CQRS 조회 측 Redis 에 저장되는 잔액/등급 스냅샷 모델.</p>
+ *
  * 읽기 전용 멤버십 뷰 (Redis Cache-Aside 저장 모델, CQRS의 조회 측).
  *
  * @param userId       유저 식별자

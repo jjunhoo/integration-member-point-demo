@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
+ * <p><b>용도:</b> 통합 회원/채널 연결 HTTP API 진입점 (JWT 필요).</p>
+ *
  * 통합 회원 API 컨트롤러 (인증 필요).
  *
  * <p>JWT 로 식별된 회원 본인의 통합 프로필과 비즈니스 채널(편의점/슈퍼 등)

@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * <p><b>용도:</b> Kafka 리스너 컨테이너·재시도·DLQ 에러 핸들러 설정.</p>
+ *
  * Kafka Consumer 설정 + 결함 허용(재시도/DLQ) 설정.
  *
  * <h3>에러 핸들링 전략</h3>

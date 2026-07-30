@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.Map;
 
 /**
+ * <p><b>용도:</b> 컨트롤러 예외를 프론트용 JSON message 응답으로 변환하는 공통 핸들러.</p>
+ *
  * 데모용 공통 예외 응답 (프론트에서 message 필드를 그대로 표시).
  */
 @RestControllerAdvice

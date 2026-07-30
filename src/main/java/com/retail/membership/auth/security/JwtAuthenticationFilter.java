@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.util.List;
 
 /**
+ * <p><b>용도:</b> Bearer access token 을 검증해 SecurityContext 에 인증을 넣는 서블릿 필터.</p>
+ *
  * 요청마다 Authorization 헤더의 Bearer access token 을 검증해
  * SecurityContext 에 인증 정보를 설정하는 필터 (Stateless).
  */

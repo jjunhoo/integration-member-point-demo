@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 
 /**
+ * <p><b>용도:</b> 회원별 refresh 토큰을 Redis 에 저장·대조·회수하는 저장소.</p>
+ *
  * Refresh 토큰 저장소 (Redis).
  *
  * <p>회원별 최신 refresh 토큰을 저장하여 (1) 토큰 재발급 시 유효성 대조,

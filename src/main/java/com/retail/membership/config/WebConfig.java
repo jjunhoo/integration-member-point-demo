@@ -7,6 +7,8 @@ import org.springframework.format.FormatterRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
+ * <p><b>용도:</b> URL path 의 SocialProvider 를 대소문자 무시로 변환하는 MVC 설정.</p>
+ *
  * 경로 변수의 소셜 provider 를 대소문자 구분 없이 변환한다 (예: /social/kakao → KAKAO).
  */
 @Configuration

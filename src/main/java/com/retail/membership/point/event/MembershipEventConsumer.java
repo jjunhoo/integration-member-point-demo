@@ -14,6 +14,8 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 /**
+ * <p><b>용도:</b> 도메인 이벤트를 소비해 Redis 조회 뷰를 동기화하는 Kafka 컨슈머.</p>
+ *
  * 멤버십 도메인 이벤트 Consumer (CQRS 조회 뷰 동기화).
  *
  * <p>토픽 {@code membership.domain-event.v1} 를 구독하여 Redis 뷰의

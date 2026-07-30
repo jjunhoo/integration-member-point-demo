@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 /**
+ * <p><b>용도:</b> 차감 시 lot 별 사용 금액을 남기는 포인트 사용 이력 엔티티.</p>
+ *
  * 포인트 사용(차감) 이력.
  *
  * <p>한 번의 차감 요청이 여러 lot 을 쓰면 같은 {@link #deductTxId} 로 여러 행이 생긴다.

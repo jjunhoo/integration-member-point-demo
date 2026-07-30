@@ -3,6 +3,8 @@ package com.retail.membership.auth.social;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
+ * <p><b>용도:</b> 카카오/네이버/애플 엔드포인트·시크릿 등 소셜 설정 바인딩.</p>
+ *
  * 소셜 provider 엔드포인트/검증 설정 (application.yml: retail.social.*).
  */
 @ConfigurationProperties(prefix = "retail.social")

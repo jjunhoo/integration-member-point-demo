@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 /**
+ * <p><b>용도:</b> 로컬 loginId/password 자격증명을 담는 JPA 엔티티.</p>
+ *
  * 로컬(아이디/비밀번호) 로그인 자격 증명.
  *
  * <p>소셜 {@code SocialAccount} 와 대칭되는 인증 수단 엔티티다.

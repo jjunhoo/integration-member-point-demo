@@ -18,6 +18,8 @@ import com.retail.membership.auth.social.SocialProvider;
 import java.time.Instant;
 
 /**
+ * <p><b>용도:</b> 소셜 provider 아이덴티티와 통합 회원을 연결하는 JPA 엔티티.</p>
+ *
  * 소셜 로그인 아이덴티티 연결.
  *
  * <p>(provider, providerUserId) 조합이 하나의 통합 회원을 가리킨다. 이 매핑을 통해

@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
+ * <p><b>용도:</b> 비밀번호 변경 API 요청 DTO.</p>
+ *
  * 비밀번호 변경 요청.
  *
  * @param currentPassword 현재 비밀번호

@@ -1,6 +1,8 @@
 package com.retail.membership.member.domain;
 
 /**
+ * <p><b>용도:</b> 통합 대상 4대 비즈니스 채널 열거형 (CVS/SUPER/HS/O4O).</p>
+ *
  * 통합 대상 4대 비즈니스 채널.
  *
  * <p>로그인 수단(소셜 provider)과는 별개의 축이다. 한 명의 통합 회원이

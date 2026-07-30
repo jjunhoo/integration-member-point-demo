@@ -1,6 +1,8 @@
 package com.retail.membership.auth.social;
 
 /**
+ * <p><b>용도:</b> provider 응답을 통일한 소셜 사용자 정보 값 객체.</p>
+ *
  * provider 별 응답을 표준화한 소셜 사용자 정보.
  *
  * @param provider       소셜 provider

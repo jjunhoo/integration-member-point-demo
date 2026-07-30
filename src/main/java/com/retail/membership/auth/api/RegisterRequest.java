@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
+ * <p><b>용도:</b> 로컬 회원가입 API 요청 DTO.</p>
+ *
  * 로컬 회원가입 요청.
  *
  * <p>채널은 가입 시 받지 않는다. 채널 계정 매핑은 통합 유스케이스에서 따로 연결한다.

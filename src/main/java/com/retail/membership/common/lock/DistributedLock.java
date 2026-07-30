@@ -7,6 +7,8 @@ import java.lang.annotation.Target;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * <p><b>용도:</b> 메서드에 Redisson 분산 락을 적용하기 위한 마커 어노테이션.</p>
+ *
  * 분산 락 공통 어노테이션.
  *
  * <p>메서드에 부착하면 {@link DistributedLockAspect}가 대상 실행 전

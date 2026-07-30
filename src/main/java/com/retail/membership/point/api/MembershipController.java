@@ -19,6 +19,8 @@ import java.time.Instant;
 import java.util.List;
 
 /**
+ * <p><b>용도:</b> 포인트 적립/차감·Redis 뷰·lot 조회 HTTP API 진입점.</p>
+ *
  * 멤버십 포인트 API 컨트롤러 (데모, {@code permitAll}).
  *
  * <p>CQRS 쓰기/읽기를 한 컨트롤러에서 제공한다.

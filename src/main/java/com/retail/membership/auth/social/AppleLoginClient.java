@@ -9,6 +9,8 @@ import java.util.Base64;
 import java.util.Map;
 
 /**
+ * <p><b>용도:</b> 애플 id_token 검증으로 소셜 사용자를 식별하는 SocialLoginClient 구현.</p>
+ *
  * 애플 로그인 연동.
  *
  * <p>애플은 access token 이 아니라 <b>id_token(JWT)</b> 을 검증하는 방식이다.

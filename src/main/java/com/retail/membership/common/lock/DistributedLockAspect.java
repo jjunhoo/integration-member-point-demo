@@ -31,6 +31,9 @@ import java.lang.reflect.Method;
 @Aspect
 @Component
 @Order(Integer.MIN_VALUE) // @Transactional(Ordered.LOWEST) 보다 항상 바깥에서 실행
+/**
+ * <p><b>용도:</b> @DistributedLock 메서드 전후로 Redis 락 획득/해제하는 AOP.</p>
+ */
 @RequiredArgsConstructor
 public class DistributedLockAspect {
 

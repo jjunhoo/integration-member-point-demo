@@ -6,6 +6,8 @@ import com.retail.membership.member.domain.IntegratedMember;
 import java.util.List;
 
 /**
+ * <p><b>용도:</b> 통합 회원 정보와 연결된 채널 목록을 담는 응답 DTO.</p>
+ *
  * 통합 회원 조회 응답 (연결된 채널 계정 목록 포함).
  */
 public record MemberResponse(

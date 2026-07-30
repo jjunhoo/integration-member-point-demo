@@ -16,6 +16,8 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 /**
+ * <p><b>용도:</b> 통합 회원과 레거시 채널 회원번호를 연결하는 JPA 엔티티.</p>
+ *
  * 채널 계정 연결.
  *
  * <p>통합 회원이 특정 비즈니스 채널(편의점/슈퍼/홈쇼핑/O4O)에 보유한 계정을 나타낸다.
