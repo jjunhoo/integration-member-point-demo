@@ -52,8 +52,12 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         // 기존 포인트 데모 엔드포인트 (하위 호환 유지)
                         .requestMatchers("/api/v1/membership/**").permitAll()
+                        // 데모용 H2 콘솔 (iframe)
+                        .requestMatchers("/h2-console/**").permitAll()
                         // 그 외 회원 API 등은 인증 필요
                         .anyRequest().authenticated())
+                // H2 콘솔이 iframe 을 쓰므로 same-origin 허용
+                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 // 인증 실패 시 401 반환 (리다이렉트 X)
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(
                         new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))

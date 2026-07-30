@@ -41,10 +41,38 @@
           적립 금액
           <input v-model.number="amount" type="number" min="1" required />
         </label>
+        <label>
+          만료일시 (선택)
+          <input v-model="expiresLocal" type="datetime-local" />
+        </label>
         <button type="submit" :disabled="busy || !member">적립</button>
         <button type="button" class="secondary" :disabled="busy || !member" @click="onDeduct">차감</button>
-        <button type="button" class="ghost" :disabled="busy || !member" @click="refreshView">새로고침</button>
+        <button type="button" class="ghost" :disabled="busy || !member" @click="refreshAll">새로고침</button>
       </form>
+      <p class="muted">만료일을 비우면 적립 시각 + 1년. 차감은 만료 임박 lot 부터(FEFO).</p>
+
+      <h3 class="lot-title">적립 Lot</h3>
+      <p v-if="!lots.length" class="muted">표시할 lot 이 없습니다.</p>
+      <table v-else class="lot-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>잔여 / 원금</th>
+            <th>적립</th>
+            <th>만료</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="lot in lots" :key="lot.id">
+            <td>{{ lot.id }}</td>
+            <td>{{ lot.remainingAmount.toLocaleString() }} / {{ lot.originalAmount.toLocaleString() }}</td>
+            <td>{{ formatInstant(lot.earnedAt) }}</td>
+            <td>{{ formatInstant(lot.expiresAt) }}</td>
+            <td>{{ lotStatus(lot) }}</td>
+          </tr>
+        </tbody>
+      </table>
     </section>
   </section>
 </template>
@@ -58,15 +86,36 @@ import { clearAuth } from '../auth'
 const router = useRouter()
 const member = ref(null)
 const view = ref(null)
+const lots = ref([])
 const amount = ref(1000)
+const expiresLocal = ref('')
 const busy = ref(false)
 const error = ref('')
 const notice = ref('')
 
+function formatInstant(value) {
+  if (!value) return '-'
+  return new Date(value).toLocaleString()
+}
+
+function lotStatus(lot) {
+  if (lot.remainingAmount <= 0) return '소진/만료'
+  return lot.usable ? '사용가능' : '만료'
+}
+
+function toExpiresAtIso() {
+  if (!expiresLocal.value) return null
+  const date = new Date(expiresLocal.value)
+  if (Number.isNaN(date.getTime())) {
+    throw new Error('만료일시 형식이 올바르지 않습니다.')
+  }
+  return date.toISOString()
+}
+
 async function load() {
   error.value = ''
   member.value = await api.me()
-  await refreshView()
+  await refreshAll()
 }
 
 async function refreshView() {
@@ -74,10 +123,19 @@ async function refreshView() {
   view.value = await api.view(member.value.memberId)
 }
 
+async function refreshLots() {
+  if (!member.value) return
+  lots.value = await api.pointLots(member.value.memberId)
+}
+
+async function refreshAll() {
+  await Promise.all([refreshView(), refreshLots()])
+}
+
 async function waitAndRefresh() {
   // Kafka → Redis 뷰 반영 대기 (데모용)
   await new Promise((r) => setTimeout(r, 800))
-  await refreshView()
+  await refreshAll()
 }
 
 async function onAccumulate() {
@@ -86,7 +144,8 @@ async function onAccumulate() {
   error.value = ''
   notice.value = ''
   try {
-    await api.accumulate(member.value.memberId, amount.value)
+    const expiresAt = toExpiresAtIso()
+    await api.accumulate(member.value.memberId, amount.value, expiresAt)
     notice.value = '적립 요청을 보냈습니다.'
     await waitAndRefresh()
   } catch (e) {

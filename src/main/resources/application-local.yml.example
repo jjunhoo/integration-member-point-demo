@@ -1,0 +1,15 @@
+# 로컬 전용 시크릿 템플릿.
+# 사용법:
+#   1) 이 파일을 복사해 application-local.yml 생성
+#      cp src/main/resources/application-local.yml.example src/main/resources/application-local.yml
+#   2) 아래 값을 네이버 개발자센터 발급값으로 채운다
+#   3) ./gradlew bootRun  (local 프로필이 기본 활성화됨)
+#
+# application-local.yml 은 .gitignore 대상이라 Git 에 올라가지 않는다.
+
+retail:
+  social:
+    naver:
+      client-id: your-naver-client-id
+      client-secret: your-naver-client-secret
+      redirect-uri: http://127.0.0.1:5173/auth/naver/callback

@@ -41,7 +41,7 @@
             "url": { "raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","register"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\",\n  \"channel\": \"{{channel}}\",\n  \"email\": \"demo@example.com\",\n  \"name\": \"데모유저\"\n}"
+              "raw": "{\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\",\n  \"email\": \"demo@example.com\",\n  \"name\": \"데모유저\"\n}"
             }
           }
         },
@@ -67,7 +67,7 @@
             "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\",\n  \"channel\": \"{{channel}}\"\n}"
+              "raw": "{\n  \"loginId\": \"{{loginId}}\",\n  \"password\": \"{{password}}\"\n}"
             }
           }
         },
@@ -95,6 +95,41 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"currentPassword\": \"{{password}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "네이버 인가 URL 발급",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/oauth/naver/authorize-url", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","oauth","naver","authorize-url"] }
+          }
+        },
+        {
+          "name": "네이버 인가 코드 로그인",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  var json = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', json.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/oauth/naver", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","oauth","naver"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"<네이버 콜백 code>\",\n  \"state\": \"<authorize-url 에서 받은 state>\"\n}"
             }
           }
         },
@@ -139,7 +174,7 @@
             "url": { "raw": "{{baseUrl}}/api/v1/auth/social/apple", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","social","apple"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"channel\": \"{{channel}}\",\n  \"token\": \"{{appleIdToken}}\"\n}"
+              "raw": "{\n  \"token\": \"{{appleIdToken}}\"\n}"
             }
           }
         },
@@ -151,7 +186,7 @@
             "url": { "raw": "{{baseUrl}}/api/v1/auth/social/kakao", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","social","kakao"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"channel\": \"{{channel}}\",\n  \"token\": \"<카카오 SDK 로 받은 access token>\"\n}"
+              "raw": "{\n  \"token\": \"<카카오 SDK 로 받은 access token>\"\n}"
             }
           }
         },
@@ -163,7 +198,7 @@
             "url": { "raw": "{{baseUrl}}/api/v1/auth/social/naver", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","social","naver"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"channel\": \"{{channel}}\",\n  \"token\": \"<네이버 SDK 로 받은 access token>\"\n}"
+              "raw": "{\n  \"token\": \"<네이버 SDK 로 받은 access token>\"\n}"
             }
           }
         },
@@ -242,7 +277,7 @@
             "url": { "raw": "{{baseUrl}}/api/v1/membership/points/accumulate", "host": ["{{baseUrl}}"], "path": ["api","v1","membership","points","accumulate"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"amount\": 50000\n}"
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"amount\": 50000,\n  \"expiresAt\": \"2027-07-30T00:00:00Z\"\n}"
             }
           }
         },
@@ -264,6 +299,14 @@
             "method": "GET",
             "header": [],
             "url": { "raw": "{{baseUrl}}/api/v1/membership/{{userId}}/view", "host": ["{{baseUrl}}"], "path": ["api","v1","membership","{{userId}}","view"] }
+          }
+        },
+        {
+          "name": "포인트 Lot 목록",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/membership/{{userId}}/point-lots", "host": ["{{baseUrl}}"], "path": ["api","v1","membership","{{userId}}","point-lots"] }
           }
         }
       ]

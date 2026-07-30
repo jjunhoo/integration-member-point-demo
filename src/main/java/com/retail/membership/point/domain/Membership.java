@@ -14,8 +14,10 @@ import lombok.NoArgsConstructor;
 /**
  * 통합 멤버십 애그리거트 (Master DB 엔티티).
  *
- * <p>포인트 잔액/누적 및 등급을 보유한다. 동시성은 상위 레이어의 분산 락으로
- * 1차 방어하고, 낙관적 락({@link Version})으로 DB 레벨에서 2차 방어한다.
+ * <p>포인트 잔액/누적 및 등급을 보유한다. 실제 적립 단위는 {@link PointLot} 이며,
+ * {@link #pointBalance} 는 사용 가능 lot 잔여 합의 요약이다.
+ * 동시성은 상위 레이어의 분산 락으로 1차 방어하고, 낙관적 락({@link Version})으로
+ * DB 레벨에서 2차 방어한다.
  */
 @Entity
 @Getter

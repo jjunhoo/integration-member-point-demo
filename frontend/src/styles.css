@@ -191,6 +191,29 @@ button.ghost {
   border: 1px solid var(--line);
 }
 
+button.naver {
+  width: 100%;
+  background: #03c75a;
+  color: #fff;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 14px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
 .error {
   color: var(--danger);
   margin: 0;
@@ -260,4 +283,27 @@ button.ghost {
 
 .muted {
   color: var(--muted);
+}
+
+.lot-title {
+  margin: 24px 0 10px;
+  font-size: 1.05rem;
+}
+
+.lot-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.lot-table th,
+.lot-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--muted) 35%, transparent);
+}
+
+.lot-table th {
+  color: var(--muted);
+  font-weight: 600;
 }

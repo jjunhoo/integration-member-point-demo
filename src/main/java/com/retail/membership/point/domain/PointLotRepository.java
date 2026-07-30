@@ -1,0 +1,17 @@
+package com.retail.membership.point.domain;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.time.Instant;
+import java.util.List;
+
+public interface PointLotRepository extends JpaRepository<PointLot, Long> {
+
+    List<PointLot> findByUserIdOrderByExpiresAtAscEarnedAtAsc(String userId);
+
+    List<PointLot> findByUserIdAndRemainingAmountGreaterThanAndExpiresAtAfterOrderByExpiresAtAscEarnedAtAsc(
+            String userId, long remainingAmount, Instant now);
+
+    List<PointLot> findByUserIdAndRemainingAmountGreaterThanAndExpiresAtLessThanEqual(
+            String userId, long remainingAmount, Instant now);
+}

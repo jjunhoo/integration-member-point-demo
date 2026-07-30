@@ -33,26 +33,19 @@ public class MemberService {
     /**
      * 소셜 사용자 정보로 통합 회원을 조회하거나(가입되어 있으면) 신규 생성한다.
      *
-     * <p>동작:
-     * <ol>
-     *   <li>(provider, providerUserId) 로 기존 소셜 계정 조회 → 있으면 해당 통합 회원 반환</li>
-     *   <li>없으면 신규 통합 회원 + 소셜 계정 생성</li>
-     *   <li>로그인한 채널의 채널 계정이 없으면 자동 연결(신규 통합회원 기준)</li>
-     * </ol>
-     *
-     * @return 인증에 사용할 통합 회원
+     * <p>채널 계정 연결은 인증과 분리한다. 필요 시 {@link #linkChannelAccount} 로 연결한다.
      */
     @Transactional
-    public IntegratedMember resolveOrRegisterBySocial(SocialUserInfo userInfo, Channel loginChannel) {
+    public IntegratedMember resolveOrRegisterBySocial(SocialUserInfo userInfo) {
         return socialAccountRepository
                 .findByProviderAndProviderUserId(userInfo.provider(), userInfo.providerUserId())
                 .map(social -> memberRepository.findById(social.getMemberId())
                         .orElseThrow(() -> new IllegalStateException(
                                 "소셜 계정에 연결된 통합 회원이 없습니다. memberId=" + social.getMemberId())))
-                .orElseGet(() -> registerNewMember(userInfo, loginChannel));
+                .orElseGet(() -> registerNewMember(userInfo));
     }
 
-    private IntegratedMember registerNewMember(SocialUserInfo userInfo, Channel loginChannel) {
+    private IntegratedMember registerNewMember(SocialUserInfo userInfo) {
         // 실서비스에서는 소셜 프로필만으로 CI 를 알 수 없으므로, 본인확인 완료 후 CI 를 채운다.
         // 데모에서는 CI 미보유(null) 상태의 통합 회원으로 생성한다.
         IntegratedMember member = IntegratedMember.create(null, userInfo.name(), null, userInfo.email());
@@ -61,27 +54,22 @@ public class MemberService {
         socialAccountRepository.save(
                 SocialAccount.link(member.getId(), userInfo.provider(), userInfo.providerUserId()));
 
-        // 로그인한 채널 계정이 없으면 자동 연결 (채널 회원번호는 소셜 식별자 기반으로 합성)
-        ensureChannelLinked(member.getId(), loginChannel,
-                userInfo.provider() + ":" + userInfo.providerUserId());
-
-        log.info("[Member] 신규 통합 회원 생성 memberId={} provider={} channel={}",
-                member.getId(), userInfo.provider(), loginChannel);
+        log.info("[Member] 소셜 통합 회원 생성 memberId={} provider={}",
+                member.getId(), userInfo.provider());
         return member;
     }
 
     /**
-     * 로컬 가입용 통합 회원을 생성하고 채널 계정을 연결한다.
+     * 로컬 가입용 통합 회원을 생성한다.
      *
-     * @param channelMemberNo 채널 레거시 회원번호 합성값 (예: LOCAL:demo_user)
+     * <p>채널 계정({@link ChannelAccount})은 인증과 분리된 통합 매핑이므로
+     * 가입 시 자동 연결하지 않는다. 필요 시 {@link #linkChannelAccount} 로 연결한다.
      */
     @Transactional
-    public IntegratedMember registerLocalMember(String name, String email, Channel loginChannel,
-                                                String channelMemberNo) {
+    public IntegratedMember registerLocalMember(String name, String email) {
         IntegratedMember member = IntegratedMember.create(null, name, null, email);
         memberRepository.save(member);
-        ensureChannelLinked(member.getId(), loginChannel, channelMemberNo);
-        log.info("[Member] 로컬 통합 회원 생성 memberId={} channel={}", member.getId(), loginChannel);
+        log.info("[Member] 로컬 통합 회원 생성 memberId={}", member.getId());
         return member;
     }
 

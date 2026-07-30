@@ -1,5 +1,6 @@
 package com.retail.membership.common.api;
 
+import com.retail.membership.auth.social.SocialAuthException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,6 +18,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+    }
+
+    @ExceptionHandler(SocialAuthException.class)
+    public ResponseEntity<Map<String, String>> handleSocialAuth(SocialAuthException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", e.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

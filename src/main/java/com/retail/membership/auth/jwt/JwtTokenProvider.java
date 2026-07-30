@@ -50,16 +50,19 @@ public class JwtTokenProvider {
     private String build(String memberId, String channel, List<String> roles,
                          TokenType type, long validitySeconds) {
         Instant now = Instant.now();
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .issuer(properties.issuer())
                 .subject(memberId)
-                .claim("channel", channel)
                 .claim("roles", roles)
                 .claim("type", type.name())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(validitySeconds)))
-                .signWith(key)
-                .compact();
+                .signWith(key);
+        // 채널은 레거시 계정 매핑용이며 로컬 인증에는 없을 수 있다.
+        if (channel != null && !channel.isBlank()) {
+            builder.claim("channel", channel);
+        }
+        return builder.compact();
     }
 
     /** 토큰을 검증하고 클레임을 파싱한다. 유효하지 않으면 {@link JwtException}. */

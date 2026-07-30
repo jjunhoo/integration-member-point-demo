@@ -1,19 +1,15 @@
 package com.retail.membership.auth.api;
 
-import com.retail.membership.member.domain.Channel;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * 로컬 로그인 요청.
  *
- * @param loginId  로그인 ID
- * @param password 비밀번호
- * @param channel  로그인 비즈니스 채널
+ * <p>채널은 인증 대상이 아니다. 레거시 채널 계정 연결은
+ * {@code POST /api/v1/members/me/channels} 로 별도 처리한다.
  */
 public record LoginRequest(
         @NotBlank String loginId,
-        @NotBlank String password,
-        @NotNull Channel channel
+        @NotBlank String password
 ) {
 }
