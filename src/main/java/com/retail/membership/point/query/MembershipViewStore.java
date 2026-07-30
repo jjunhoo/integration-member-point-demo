@@ -15,6 +15,8 @@ import java.time.Instant;
 import java.util.Optional;
 
 /**
+ * <p><b>용도:</b> MembershipView 를 Redis 에 읽고 이벤트 기준으로 upsert 하는 저장소.</p>
+ *
  * Redis 기반 멤버십 뷰 저장소 (Cache-Aside 조회 모델).
  *
  * <p>Command 측 이벤트를 구독하여 준실시간으로 등급/잔액을 갱신하며,
@@ -30,12 +32,21 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class MembershipViewStore {
 
+    /** Redis 키 prefix. 실제 키는 {@code membership:view:{userId}}. */
     private static final String KEY_PREFIX = "membership:view:";
+
+    /** 뷰 TTL. 갱신되지 않으면 만료되어 Cache-Aside 미스로 이어질 수 있다. */
     private static final Duration TTL = Duration.ofDays(1);
 
     private final RedissonClient redissonClient;
     private final ObjectMapper objectMapper;
 
+    /**
+     * userId 로 Redis 조회 뷰를 읽는다.
+     *
+     * @param userId 멤버십 유저 식별자
+     * @return 캐시 히트 시 뷰, 미스/만료 시 empty
+     */
     public Optional<MembershipView> find(String userId) {
         RBucket<String> bucket = redissonClient.getBucket(key(userId), StringCodec.INSTANCE);
         String json = bucket.get();
@@ -46,10 +57,12 @@ public class MembershipViewStore {
     }
 
     /**
-     * 도메인 이벤트를 뷰에 반영(upsert)한다.
+     * 도메인 이벤트 스냅샷으로 뷰를 upsert 한다.
      *
-     * <p>멱등성 보장: 이미 동일 {@code eventId} 를 반영했다면 재적용하지 않는다.
-     * (Kafka at-least-once 로 인한 중복 수신에 대비)
+     * <p>이벤트에 실린 잔액/등급으로 Redis 값을 덮어쓴다.
+     * 이미 동일 {@code eventId} 가 반영된 경우 건너뛰어 Kafka at-least-once 중복을 흡수한다.
+     *
+     * @param event 커밋 후 발행된 멤버십 도메인 이벤트
      */
     public void apply(MembershipDomainEvent event) {
         RBucket<String> bucket = redissonClient.getBucket(key(event.userId()), StringCodec.INSTANCE);
@@ -76,10 +89,12 @@ public class MembershipViewStore {
                 event.userId(), event.pointBalance(), event.grade());
     }
 
+    /** Redis 버킷 키를 만든다. */
     private String key(String userId) {
         return KEY_PREFIX + userId;
     }
 
+    /** JSON 문자열을 {@link MembershipView} 로 역직렬화한다. */
     private MembershipView readValue(String json) {
         try {
             return objectMapper.readValue(json, MembershipView.class);
@@ -88,6 +103,7 @@ public class MembershipViewStore {
         }
     }
 
+    /** {@link MembershipView} 를 JSON 문자열로 직렬화한다. */
     private String writeValue(MembershipView view) {
         try {
             return objectMapper.writeValueAsString(view);

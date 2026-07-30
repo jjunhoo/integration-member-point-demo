@@ -8,6 +8,8 @@ import org.springframework.web.client.RestClient;
 import java.util.Map;
 
 /**
+ * <p><b>용도:</b> 카카오 access token 으로 사용자 정보를 조회하는 SocialLoginClient 구현.</p>
+ *
  * 카카오 로그인 연동.
  *
  * <p>프론트엔드가 카카오 SDK 로 획득한 access token 을 받아
@@ -20,16 +22,19 @@ public class KakaoLoginClient implements SocialLoginClient {
     private final RestClient restClient;
     private final String userInfoUri;
 
+    /** 카카오 사용자 정보 API URI로 RestClient를 초기화한다. */
     public KakaoLoginClient(SocialLoginProperties properties) {
         this.userInfoUri = properties.kakao().userInfoUri();
         this.restClient = RestClient.create();
     }
 
+    /** {@inheritDoc} */
     @Override
     public SocialProvider provider() {
         return SocialProvider.KAKAO;
     }
 
+    /** access token으로 카카오 사용자 정보 API를 호출한다. */
     @Override
     @SuppressWarnings("unchecked")
     public SocialUserInfo fetchUserInfo(String accessToken) {

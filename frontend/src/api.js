@@ -48,12 +48,18 @@ async function request(path, { method = 'GET', body, auth = false } = {}) {
 export const api = {
   register: (body) => request('/api/v1/auth/register', { method: 'POST', body }),
   login: (body) => request('/api/v1/auth/login', { method: 'POST', body }),
+  naverAuthorizeUrl: () => request('/api/v1/auth/oauth/naver/authorize-url'),
+  naverOAuthLogin: (body) => request('/api/v1/auth/oauth/naver', { method: 'POST', body }),
   logout: () => request('/api/v1/auth/logout', { method: 'POST', auth: true }),
   me: () => request('/api/v1/members/me', { auth: true }),
-  accumulate: (userId, amount) =>
+  accumulate: (userId, amount, expiresAt) =>
     request('/api/v1/membership/points/accumulate', {
       method: 'POST',
-      body: { userId, amount },
+      body: {
+        userId,
+        amount,
+        ...(expiresAt ? { expiresAt } : {}),
+      },
     }),
   deduct: (userId, amount) =>
     request('/api/v1/membership/points/deduct', {
@@ -66,11 +72,9 @@ export const api = {
     if (!res.ok) throw new Error(`뷰 조회 실패 (${res.status})`)
     return res.json()
   },
+  pointLots: async (userId) => {
+    const res = await fetch(`${API_BASE}/api/v1/membership/${userId}/point-lots`)
+    if (!res.ok) throw new Error(`lot 조회 실패 (${res.status})`)
+    return res.json()
+  },
 }
-
-export const CHANNELS = [
-  { value: 'CVS', label: '편의점' },
-  { value: 'SUPERMARKET', label: '슈퍼' },
-  { value: 'HOME_SHOPPING', label: '홈쇼핑' },
-  { value: 'O4O_APP', label: 'O4O 앱' },
-]

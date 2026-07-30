@@ -9,6 +9,8 @@ import java.util.Base64;
 import java.util.Map;
 
 /**
+ * <p><b>용도:</b> 애플 id_token 검증으로 소셜 사용자를 식별하는 SocialLoginClient 구현.</p>
+ *
  * 애플 로그인 연동.
  *
  * <p>애플은 access token 이 아니라 <b>id_token(JWT)</b> 을 검증하는 방식이다.
@@ -26,17 +28,20 @@ public class AppleLoginClient implements SocialLoginClient {
     private final String expectedIssuer;
     private final String expectedAudience;
 
+    /** 애플 id_token 검증 설정을 주입받아 클라이언트를 초기화한다. */
     public AppleLoginClient(ObjectMapper objectMapper, SocialLoginProperties properties) {
         this.objectMapper = objectMapper;
         this.expectedIssuer = properties.apple().issuer();
         this.expectedAudience = properties.apple().audience();
     }
 
+    /** {@inheritDoc} */
     @Override
     public SocialProvider provider() {
         return SocialProvider.APPLE;
     }
 
+    /** id_token payload를 파싱해 애플 사용자 정보를 반환한다. */
     @Override
     public SocialUserInfo fetchUserInfo(String idToken) {
         try {
@@ -67,6 +72,7 @@ public class AppleLoginClient implements SocialLoginClient {
         }
     }
 
+    /** id_token 클레임이 기대값(iss/aud)과 일치하는지 검증한다. */
     private void validateClaim(Map<String, Object> claims, String key, String expected) {
         Object actual = claims.get(key);
         if (expected != null && actual != null && !expected.equals(String.valueOf(actual))) {

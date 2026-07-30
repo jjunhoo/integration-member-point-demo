@@ -18,6 +18,8 @@ import com.retail.membership.auth.social.SocialProvider;
 import java.time.Instant;
 
 /**
+ * <p><b>용도:</b> 소셜 provider 아이덴티티와 통합 회원을 연결하는 JPA 엔티티.</p>
+ *
  * 소셜 로그인 아이덴티티 연결.
  *
  * <p>(provider, providerUserId) 조합이 하나의 통합 회원을 가리킨다. 이 매핑을 통해
@@ -34,6 +36,7 @@ import java.time.Instant;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SocialAccount {
 
+    /** PK. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -43,6 +46,7 @@ public class SocialAccount {
     @Column(name = "member_id", length = 36, nullable = false)
     private String memberId;
 
+    /** 소셜 provider (KAKAO/NAVER/APPLE). */
     @Enumerated(EnumType.STRING)
     @Column(name = "provider", length = 20, nullable = false)
     private SocialProvider provider;
@@ -51,9 +55,11 @@ public class SocialAccount {
     @Column(name = "provider_user_id", length = 100, nullable = false)
     private String providerUserId;
 
+    /** 소셜 계정 연결 시각. */
     @Column(name = "linked_at", nullable = false, updatable = false)
     private Instant linkedAt;
 
+    /** 통합 회원과 소셜 아이덴티티를 연결하는 내부 생성자. */
     private SocialAccount(String memberId, SocialProvider provider, String providerUserId) {
         this.memberId = memberId;
         this.provider = provider;
@@ -61,6 +67,7 @@ public class SocialAccount {
         this.linkedAt = Instant.now();
     }
 
+    /** 소셜 계정 연결 레코드를 생성한다. */
     public static SocialAccount link(String memberId, SocialProvider provider, String providerUserId) {
         return new SocialAccount(memberId, provider, providerUserId);
     }

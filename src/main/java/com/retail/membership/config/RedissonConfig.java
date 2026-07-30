@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * <p><b>용도:</b> 분산 락·Redis 뷰에 쓰는 RedissonClient 빈 구성.</p>
+ *
  * Redisson 클라이언트 설정.
  *
  * <p>분산 락(RLock)과 Cache-Aside 뷰(RBucket)를 모두 이 클라이언트로 사용한다.
@@ -23,6 +25,7 @@ public class RedissonConfig {
     @Value("${redisson.address}")
     private String address;
 
+    /** 분산 락·Redis 뷰용 RedissonClient 빈을 생성한다. */
     @Bean(destroyMethod = "shutdown")
     public RedissonClient redissonClient() {
         // Redisson 코덱용 ObjectMapper. JavaTimeModule 을 등록해야

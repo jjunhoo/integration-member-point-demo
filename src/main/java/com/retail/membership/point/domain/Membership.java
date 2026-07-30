@@ -12,10 +12,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
+ * <p><b>용도:</b> 유저별 포인트 잔액·누적·등급을 담는 멤버십 Master 엔티티.</p>
+ *
  * 통합 멤버십 애그리거트 (Master DB 엔티티).
  *
- * <p>포인트 잔액/누적 및 등급을 보유한다. 동시성은 상위 레이어의 분산 락으로
- * 1차 방어하고, 낙관적 락({@link Version})으로 DB 레벨에서 2차 방어한다.
+ * <p>포인트 잔액/누적 및 등급을 보유한다. 실제 적립 단위는 {@link PointLot} 이며,
+ * {@link #pointBalance} 는 사용 가능 lot 잔여 합의 요약이다.
+ * 동시성은 상위 레이어의 분산 락으로 1차 방어하고, 낙관적 락({@link Version})으로
+ * DB 레벨에서 2차 방어한다.
  */
 @Entity
 @Getter
@@ -46,6 +50,9 @@ public class Membership {
     @Column(name = "version", nullable = false)
     private long version;
 
+    /**
+     * 신규 멤버십을 생성한다. 잔액·누적 포인트는 0, 등급은 WELCOME 으로 초기화한다.
+     */
     public Membership(String userId) {
         this.userId = userId;
         this.pointBalance = 0L;
@@ -76,10 +83,12 @@ public class Membership {
         this.pointBalance -= amount;
     }
 
+    /** 누적 포인트 기준으로 등급을 재산정한다. */
     private void recalculateGrade() {
         this.grade = MembershipGrade.of(this.totalAccumulatedPoint);
     }
 
+    /** 포인트 금액이 양수인지 검증한다. */
     private void validatePositive(long amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("포인트 금액은 0보다 커야 합니다. amount=" + amount);

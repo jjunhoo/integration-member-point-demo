@@ -18,6 +18,8 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
+ * <p><b>용도:</b> Spring Security 필터 체인·공개 경로·JWT 필터·PasswordEncoder 설정.</p>
+ *
  * Spring Security 설정 (Stateless JWT 기반).
  *
  * <ul>
@@ -31,11 +33,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableConfigurationProperties({JwtProperties.class, SocialLoginProperties.class})
 public class SecurityConfig {
 
+    /** JWT 인증 필터 빈을 등록한다. */
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenProvider tokenProvider) {
         return new JwtAuthenticationFilter(tokenProvider);
     }
 
+    /** Stateless JWT 기반 Security 필터 체인을 구성한다. */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
@@ -52,8 +56,12 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         // 기존 포인트 데모 엔드포인트 (하위 호환 유지)
                         .requestMatchers("/api/v1/membership/**").permitAll()
+                        // 데모용 H2 콘솔 (iframe)
+                        .requestMatchers("/h2-console/**").permitAll()
                         // 그 외 회원 API 등은 인증 필요
                         .anyRequest().authenticated())
+                // H2 콘솔이 iframe 을 쓰므로 same-origin 허용
+                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 // 인증 실패 시 401 반환 (리다이렉트 X)
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(
                         new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))

@@ -9,6 +9,8 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 /**
+ * <p><b>용도:</b> 처리 실패 이벤트를 DLQ 에서 모니터링/로깅하는 Kafka 컨슈머.</p>
+ *
  * Dead Letter Queue(DLQ) Consumer.
  *
  * <p>정상 Consumer 가 재시도까지 소진하고도 처리에 실패한 메시지는
@@ -24,6 +26,10 @@ public class MembershipDlqConsumer {
             topics = "${retail.membership.kafka.dlq-topic}",
             groupId = "membership-dlq-monitor",
             containerFactory = "membershipKafkaListenerContainerFactory")
+    /**
+     * DLQ 에 적재된 실패 메시지를 수신·로깅한다.
+     * 모니터링 목적이므로 수신 후 오프셋을 커밋한다.
+     */
     public void consumeDlq(ConsumerRecord<String, String> record,
                            Acknowledgment acknowledgment,
                            @Header(name = KafkaHeaders.DLT_EXCEPTION_MESSAGE, required = false) String exceptionMessage,

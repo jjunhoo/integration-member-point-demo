@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.CompletableFuture;
 
 /**
+ * <p><b>용도:</b> 멤버십 도메인 이벤트를 Kafka 토픽에 발행하는 프로듀서.</p>
+ *
  * 멤버십 도메인 이벤트 Kafka 발행자.
  *
  * <p>토픽 {@code membership.domain-event.v1} 로 발행한다.

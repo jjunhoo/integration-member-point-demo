@@ -8,6 +8,8 @@ import org.springframework.web.client.RestClient;
 import java.util.Map;
 
 /**
+ * <p><b>용도:</b> 네이버 access token 으로 사용자 정보를 조회하는 SocialLoginClient 구현.</p>
+ *
  * 네이버 로그인 연동.
  *
  * <p>네이버 사용자 정보는 {@code response} 객체 안에 감싸여 반환된다.
@@ -19,16 +21,19 @@ public class NaverLoginClient implements SocialLoginClient {
     private final RestClient restClient;
     private final String userInfoUri;
 
+    /** 네이버 사용자 정보 API URI로 RestClient를 초기화한다. */
     public NaverLoginClient(SocialLoginProperties properties) {
         this.userInfoUri = properties.naver().userInfoUri();
         this.restClient = RestClient.create();
     }
 
+    /** {@inheritDoc} */
     @Override
     public SocialProvider provider() {
         return SocialProvider.NAVER;
     }
 
+    /** access token으로 네이버 사용자 정보 API를 호출한다. */
     @Override
     @SuppressWarnings("unchecked")
     public SocialUserInfo fetchUserInfo(String accessToken) {

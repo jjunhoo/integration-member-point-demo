@@ -1,6 +1,8 @@
 package com.retail.membership.auth.social;
 
 /**
+ * <p><b>용도:</b> 소셜 provider 별 사용자 조회 전략을 추상화한 인터페이스.</p>
+ *
  * 소셜 로그인 provider 연동 전략(Strategy).
  *
  * <p>provider 마다 토큰 검증/사용자 조회 방식이 다르므로 이 인터페이스로 추상화한다.

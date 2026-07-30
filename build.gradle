@@ -60,6 +60,13 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+// 로컬 데모: bootRun 기본 프로필을 local 로 두어 application-local.yml 을 읽는다.
+// (시크릿은 application-local.yml 에만 두고 Git 에 커밋하지 않는다)
+tasks.named('bootRun') {
+    systemProperty 'spring.profiles.active',
+            System.getenv('SPRING_PROFILES_ACTIVE') ?: 'local'
+}
+
 // AOP 파라미터 바인딩(@annotation) 및 SpEL 파라미터 참조(#command)를 위해
 // 메서드 파라미터명을 클래스 파일에 보존한다.
 tasks.withType(JavaCompile).configureEach {

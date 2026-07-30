@@ -1,16 +1,19 @@
 package com.retail.membership.auth.application;
 
+import com.retail.membership.auth.api.NaverAuthorizeUrlResponse;
 import com.retail.membership.auth.jwt.JwtProperties;
 import com.retail.membership.auth.jwt.JwtTokenProvider;
 import com.retail.membership.auth.jwt.TokenPair;
 import com.retail.membership.auth.jwt.TokenType;
 import com.retail.membership.auth.local.LocalCredential;
 import com.retail.membership.auth.local.LocalCredentialRepository;
+import com.retail.membership.auth.social.NaverOAuthClient;
+import com.retail.membership.auth.social.OAuthStateStore;
+import com.retail.membership.auth.social.SocialAuthException;
 import com.retail.membership.auth.social.SocialLoginClientRegistry;
 import com.retail.membership.auth.social.SocialProvider;
 import com.retail.membership.auth.social.SocialUserInfo;
 import com.retail.membership.member.application.MemberService;
-import com.retail.membership.member.domain.Channel;
 import com.retail.membership.member.domain.IntegratedMember;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +27,17 @@ import java.util.List;
 /**
  * 인증 애플리케이션 서비스.
  *
- * <p>소셜/로컬 로그인 → 통합 회원 해석 → JWT 발급의 오케스트레이션을 담당한다.
- * refresh 토큰 재발급/로그아웃(회수)/비밀번호 변경도 처리한다.
+ * <p><b>용도:</b> 로그인/회원가입부터 JWT 발급·갱신·로그아웃까지 인증 유스케이스를 오케스트레이션한다.
+ * 회원 엔티티 생성 자체는 {@link MemberService} 에 위임하고, 이 서비스는 자격증명 검증과 토큰 생명주기에 집중한다.
+ *
+ * <h3>주요 책임</h3>
+ * <ul>
+ *   <li>로컬 가입/로그인 ({@code LocalCredential} + BCrypt)</li>
+ *   <li>네이버 OAuth 인가 코드 로그인 (state 검증 → 토큰 교환 → 프로필)</li>
+ *   <li>소셜 access-token 직접 로그인 (카카오/네이버/애플 클라이언트 레지스트리)</li>
+ *   <li>access/refresh JWT 발급 및 Redis refresh 저장·회수·회전</li>
+ *   <li>비밀번호 변경 후 refresh 강제 폐기</li>
+ * </ul>
  */
 @Slf4j
 @Service
@@ -44,50 +56,67 @@ public class AuthService {
     private final RefreshTokenStore refreshTokenStore;
     private final LocalCredentialRepository localCredentialRepository;
     private final PasswordEncoder passwordEncoder;
+    private final NaverOAuthClient naverOAuthClient;
+    private final OAuthStateStore oAuthStateStore;
 
     /**
-     * 소셜 로그인. provider SDK 로 획득한 토큰으로 사용자를 식별하고 JWT 를 발급한다.
+     * 소셜 로그인. provider 토큰으로 사용자를 식별하고 JWT 를 발급한다.
      *
-     * @param provider     소셜 provider (KAKAO/NAVER/APPLE)
-     * @param loginChannel 로그인한 비즈니스 채널
-     * @param token        access token(kakao/naver) 또는 id_token(apple)
+     * @param provider 소셜 provider (KAKAO/NAVER/APPLE)
+     * @param token    access token(kakao/naver) 또는 id_token(apple)
      */
-    public TokenPair socialLogin(SocialProvider provider, Channel loginChannel, String token) {
-        // 1) provider 전략으로 표준 사용자 정보 획득
+    public TokenPair socialLogin(SocialProvider provider, String token) {
         SocialUserInfo userInfo = socialClients.get(provider).fetchUserInfo(token);
+        IntegratedMember member = memberService.resolveOrRegisterBySocial(userInfo);
+        return issueAndStore(member.getId(), null);
+    }
 
-        // 2) 통합 회원 해석(없으면 신규 가입)
-        IntegratedMember member = memberService.resolveOrRegisterBySocial(userInfo, loginChannel);
+    /**
+     * 네이버 OAuth 인가 URL + CSRF 방지용 state 발급.
+     *
+     * <p>state 는 Redis 에 짧게 보관되며, 콜백 로그인 시 1회 소비된다.
+     */
+    public NaverAuthorizeUrlResponse createNaverAuthorizeUrl() {
+        String state = oAuthStateStore.issue(SocialProvider.NAVER.name());
+        String authorizeUrl = naverOAuthClient.buildAuthorizeUrl(state);
+        return new NaverAuthorizeUrlResponse(authorizeUrl, state);
+    }
 
-        // 3) JWT 발급 + refresh 저장
-        return issueAndStore(member.getId(), loginChannel.name());
+    /**
+     * 네이버 인가 코드 로그인.
+     * state 검증 → code 로 access token 교환 → 프로필 조회 → JWT 발급.
+     */
+    public TokenPair loginWithNaverCode(String code, String state) {
+        if (!oAuthStateStore.consume(state, SocialProvider.NAVER.name())) {
+            throw new SocialAuthException("유효하지 않거나 만료된 OAuth state 입니다");
+        }
+        String accessToken = naverOAuthClient.exchangeCodeForAccessToken(code, state);
+        SocialUserInfo userInfo = socialClients.get(SocialProvider.NAVER).fetchUserInfo(accessToken);
+        IntegratedMember member = memberService.resolveOrRegisterBySocial(userInfo);
+        log.info("[Auth] 네이버 OAuth 로그인 memberId={}", member.getId());
+        return issueAndStore(member.getId(), null);
     }
 
     /**
      * 로컬 회원가입. loginId/password 로 LocalCredential 을 만들고 JWT 를 발급한다.
      */
     @Transactional
-    public TokenPair register(String loginId, String password, Channel channel, String email, String name) {
+    public TokenPair register(String loginId, String password, String email, String name) {
         if (localCredentialRepository.existsByLoginId(loginId)) {
             throw new IllegalArgumentException("이미 사용 중인 loginId 입니다");
         }
 
-        String channelMemberNo = "LOCAL:" + loginId;
-        IntegratedMember member = memberService.registerLocalMember(name, email, channel, channelMemberNo);
-
+        IntegratedMember member = memberService.registerLocalMember(name, email);
         localCredentialRepository.save(
                 LocalCredential.create(member.getId(), loginId, passwordEncoder.encode(password)));
 
-        log.info("[Auth] 로컬 회원가입 완료 memberId={} loginId={} channel={}",
-                member.getId(), loginId, channel);
-        return issueAndStore(member.getId(), channel.name());
+        log.info("[Auth] 로컬 회원가입 완료 memberId={} loginId={}", member.getId(), loginId);
+        return issueAndStore(member.getId(), null);
     }
 
-    /**
-     * 로컬 로그인. 실패 메시지는 계정 존재 여부를 드러내지 않는다.
-     */
-    @Transactional
-    public TokenPair login(String loginId, String password, Channel channel) {
+    /** 로컬 로그인. 실패 메시지는 계정 존재 여부를 드러내지 않는다. */
+    @Transactional(readOnly = true)
+    public TokenPair login(String loginId, String password) {
         LocalCredential credential = localCredentialRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new IllegalArgumentException(LOGIN_FAILED_MESSAGE));
 
@@ -95,16 +124,11 @@ public class AuthService {
             throw new IllegalArgumentException(LOGIN_FAILED_MESSAGE);
         }
 
-        // 다른 채널로 로그인해도 채널 계정이 없으면 연결 (소셜 신규와 동일한 편의)
-        memberService.ensureChannelLinked(credential.getMemberId(), channel, "LOCAL:" + loginId);
-
-        log.debug("[Auth] 로컬 로그인 성공 memberId={} channel={}", credential.getMemberId(), channel);
-        return issueAndStore(credential.getMemberId(), channel.name());
+        log.debug("[Auth] 로컬 로그인 성공 memberId={}", credential.getMemberId());
+        return issueAndStore(credential.getMemberId(), null);
     }
 
-    /**
-     * 비밀번호 변경. 성공 시 refresh 를 회수하여 재로그인을 유도한다.
-     */
+    /** 비밀번호 변경. 성공 시 refresh 를 회수하여 재로그인을 유도한다. */
     @Transactional
     public void changePassword(String memberId, String currentPassword, String newPassword) {
         LocalCredential credential = localCredentialRepository.findByMemberId(memberId)
@@ -134,7 +158,6 @@ public class AuthService {
             throw new IllegalArgumentException("refresh 토큰이 아닙니다");
         }
         String memberId = claims.getSubject();
-        // 저장소의 최신 refresh 와 대조 (탈취/재사용 방지)
         if (!refreshTokenStore.matches(memberId, refreshToken)) {
             throw new IllegalArgumentException("만료되었거나 회수된 refresh 토큰");
         }
@@ -147,6 +170,7 @@ public class AuthService {
         refreshTokenStore.revoke(memberId);
     }
 
+    /** access/refresh 발급 후 refresh 를 Redis 에 저장한다. */
     private TokenPair issueAndStore(String memberId, String channel) {
         TokenPair pair = tokenProvider.issue(memberId, channel, DEFAULT_ROLES);
         refreshTokenStore.save(memberId, pair.refreshToken(),

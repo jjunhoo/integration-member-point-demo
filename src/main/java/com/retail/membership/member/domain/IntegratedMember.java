@@ -14,6 +14,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
+ * <p><b>용도:</b> 4대 채널을 가로지르는 통합 회원 애그리거트 루트 엔티티.</p>
+ *
  * 통합 회원 애그리거트 루트.
  *
  * <p>4대 채널을 가로지르는 "한 사람"을 나타내는 단일 식별자({@link #id})를 보유한다.
@@ -39,22 +41,28 @@ public class IntegratedMember {
     @Column(name = "ci", length = 200, unique = true)
     private String ci;
 
+    /** 회원 이름. */
     @Column(name = "name", length = 50)
     private String name;
 
+    /** 휴대폰 번호. */
     @Column(name = "phone", length = 20)
     private String phone;
 
+    /** 이메일. */
     @Column(name = "email", length = 100)
     private String email;
 
+    /** 통합 회원 상태 (ACTIVE 등). */
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
     private MemberStatus status;
 
+    /** 가입(생성) 시각. */
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    /** CI·프로필 정보로 통합 회원을 초기화하는 내부 생성자. */
     private IntegratedMember(String ci, String name, String phone, String email) {
         this.id = UUID.randomUUID().toString();
         this.ci = ci;
@@ -70,10 +78,12 @@ public class IntegratedMember {
         return new IntegratedMember(ci, name, phone, email);
     }
 
+    /** 통합 회원 상태를 변경한다. */
     public void changeStatus(MemberStatus status) {
         this.status = status;
     }
 
+    /** null이 아닌 프로필 필드만 갱신한다. */
     public void updateProfile(String name, String phone, String email) {
         if (name != null) this.name = name;
         if (phone != null) this.phone = phone;

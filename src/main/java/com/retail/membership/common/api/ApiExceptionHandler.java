@@ -1,5 +1,7 @@
 package com.retail.membership.common.api;
 
+import com.retail.membership.auth.social.SocialAuthException;
+import com.retail.membership.common.lock.LockAcquisitionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -9,16 +11,39 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.Map;
 
 /**
+ * <p><b>용도:</b> 컨트롤러 예외를 프론트용 JSON message 응답으로 변환하는 공통 핸들러.</p>
+ *
  * 데모용 공통 예외 응답 (프론트에서 message 필드를 그대로 표시).
  */
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
+    /** 잘못된 인자·요청 값 오류를 400 응답으로 변환한다. */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
     }
 
+    /** 잔액 부족 등 비즈니스 상태 오류. */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalState(IllegalStateException e) {
+        return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+    }
+
+    /** 분산 락 획득 실패를 429 응답으로 변환한다. */
+    @ExceptionHandler(LockAcquisitionException.class)
+    public ResponseEntity<Map<String, String>> handleLockAcquisition(LockAcquisitionException e) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(Map.of("message", e.getMessage()));
+    }
+
+    /** 소셜 로그인 인증 실패를 401 응답으로 변환한다. */
+    @ExceptionHandler(SocialAuthException.class)
+    public ResponseEntity<Map<String, String>> handleSocialAuth(SocialAuthException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", e.getMessage()));
+    }
+
+    /** Bean Validation 실패를 첫 번째 필드 오류 메시지로 400 응답한다. */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldErrors().stream()

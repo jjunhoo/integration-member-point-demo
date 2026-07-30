@@ -14,12 +14,6 @@
         <input v-model="form.password" type="password" autocomplete="new-password" required minlength="8" />
       </label>
       <label>
-        채널
-        <select v-model="form.channel">
-          <option v-for="c in CHANNELS" :key="c.value" :value="c.value">{{ c.label }}</option>
-        </select>
-      </label>
-      <label>
         이름 <span class="optional">(선택)</span>
         <input v-model.trim="form.name" />
       </label>
@@ -32,6 +26,11 @@
       <button type="submit" :disabled="loading">{{ loading ? '처리 중…' : '가입하고 시작' }}</button>
     </form>
 
+    <div class="divider"><span>또는</span></div>
+    <button type="button" class="naver" :disabled="loading" @click="onNaverLogin">
+      네이버로 시작
+    </button>
+
     <p class="hint">
       이미 계정이 있나요?
       <RouterLink to="/login">로그인</RouterLink>
@@ -42,8 +41,8 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
-import { api, CHANNELS } from '../api'
-import { getChannel, saveAuth } from '../auth'
+import { api } from '../api'
+import { saveAuth } from '../auth'
 
 const router = useRouter()
 const loading = ref(false)
@@ -51,7 +50,6 @@ const error = ref('')
 const form = reactive({
   loginId: '',
   password: '',
-  channel: getChannel(),
   name: '',
   email: '',
 })
@@ -63,17 +61,29 @@ async function onSubmit() {
     const payload = {
       loginId: form.loginId,
       password: form.password,
-      channel: form.channel,
     }
     if (form.name) payload.name = form.name
     if (form.email) payload.email = form.email
 
     const tokens = await api.register(payload)
-    saveAuth({ ...tokens, channel: form.channel })
+    saveAuth(tokens)
     await router.push('/')
   } catch (e) {
     error.value = e.message || '회원가입에 실패했습니다'
   } finally {
+    loading.value = false
+  }
+}
+
+async function onNaverLogin() {
+  loading.value = true
+  error.value = ''
+  try {
+    const { authorizeUrl, state } = await api.naverAuthorizeUrl()
+    sessionStorage.setItem('naverOAuthState', state)
+    window.location.href = authorizeUrl
+  } catch (e) {
+    error.value = e.message || '네이버 로그인을 시작할 수 없습니다'
     loading.value = false
   }
 }

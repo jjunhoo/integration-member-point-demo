@@ -31,6 +31,9 @@ import java.lang.reflect.Method;
 @Aspect
 @Component
 @Order(Integer.MIN_VALUE) // @Transactional(Ordered.LOWEST) 보다 항상 바깥에서 실행
+/**
+ * <p><b>용도:</b> @DistributedLock 메서드 전후로 Redis 락 획득/해제하는 AOP.</p>
+ */
 @RequiredArgsConstructor
 public class DistributedLockAspect {
 
@@ -46,6 +49,7 @@ public class DistributedLockAspect {
     // 어노테이션을 advice 파라미터로 바인딩(@annotation(x))하면 일부 환경에서
     // "JoinPointMatch was NOT bound" 바인딩 오류가 발생한다. 따라서 마커 방식으로
     // 매칭만 하고, 어노테이션 값은 조인포인트에서 리플렉션으로 직접 추출한다.
+    /** @DistributedLock 대상 메서드 실행 전후로 Redis 분산 락을 획득·해제한다. */
     @Around("@annotation(com.retail.membership.common.lock.DistributedLock)")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();

@@ -15,6 +15,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
+ * <p><b>용도:</b> JWT(HS256) 발급·파싱·타입 검증을 수행하는 컴포넌트.</p>
+ *
  * JWT 발급/검증 provider (HS256).
  *
  * <p>토큰 클레임:
@@ -32,6 +34,7 @@ public class JwtTokenProvider {
     private final JwtProperties properties;
     private final SecretKey key;
 
+    /** 설정의 시크릿으로 HS256 서명 키를 초기화한다. */
     public JwtTokenProvider(JwtProperties properties) {
         this.properties = properties;
         // HS256: 시크릿은 최소 256bit(32byte) 이상이어야 한다.
@@ -47,19 +50,23 @@ public class JwtTokenProvider {
         return new TokenPair(access, refresh, properties.accessTokenValiditySeconds());
     }
 
+    /** 지정 타입·만료 시간으로 JWT 문자열을 생성한다. */
     private String build(String memberId, String channel, List<String> roles,
                          TokenType type, long validitySeconds) {
         Instant now = Instant.now();
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .issuer(properties.issuer())
                 .subject(memberId)
-                .claim("channel", channel)
                 .claim("roles", roles)
                 .claim("type", type.name())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(validitySeconds)))
-                .signWith(key)
-                .compact();
+                .signWith(key);
+        // 채널은 레거시 계정 매핑용이며 로컬 인증에는 없을 수 있다.
+        if (channel != null && !channel.isBlank()) {
+            builder.claim("channel", channel);
+        }
+        return builder.compact();
     }
 
     /** 토큰을 검증하고 클레임을 파싱한다. 유효하지 않으면 {@link JwtException}. */

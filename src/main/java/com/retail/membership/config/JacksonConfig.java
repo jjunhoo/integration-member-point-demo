@@ -7,11 +7,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * <p><b>용도:</b> Java time(Instant 등) JSON 직렬화를 위한 Jackson 모듈 등록.</p>
+ *
  * Jackson 설정. 도메인 이벤트의 {@code Instant}(java.time) 직렬화를 지원한다.
  */
 @Configuration
 public class JacksonConfig {
 
+    /** HTTP JSON 직렬화에 JavaTime 모듈과 enum 대소문자 무시 설정을 적용한다. */
     @Bean
     public Jackson2ObjectMapperBuilderCustomizer jsonCustomizer() {
         return builder -> {

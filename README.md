@@ -365,10 +365,12 @@ Master DB 커밋 성공
 
 | Method | Path | 인증 | 설명 |
 |---|---|---|---|
-| POST | `/api/v1/auth/register` | 불필요 | 로컬 회원가입 (loginId/password, channel 필수) |
+| POST | `/api/v1/auth/register` | 불필요 | 로컬 회원가입 (loginId/password) |
 | POST | `/api/v1/auth/login` | 불필요 | 로컬 로그인 |
+| GET | `/api/v1/auth/oauth/naver/authorize-url` | 불필요 | 네이버 인가 URL + state |
+| POST | `/api/v1/auth/oauth/naver` | 불필요 | 네이버 인가 코드 로그인 |
 | POST | `/api/v1/auth/password` | Bearer | 비밀번호 변경 (성공 시 refresh 회수) |
-| POST | `/api/v1/auth/social/{provider}` | 불필요 | 소셜 로그인 (kakao/naver/apple) |
+| POST | `/api/v1/auth/social/{provider}` | 불필요 | 소셜 토큰 직접 로그인 (kakao/naver/apple) |
 | POST | `/api/v1/auth/refresh` | 불필요 | 토큰 재발급 |
 | POST | `/api/v1/auth/logout` | Bearer | refresh 회수 |
 | GET | `/api/v1/members/me` | Bearer | 내 통합 회원 + 채널 목록 |
@@ -395,6 +397,31 @@ npm run dev
 
 > 참고: 컨테이너를 이미 수동으로 띄운 상태면 Boot 는 up/down 을 건너뛴다.
 > 그 경우 종료 후에도 인프라가 남을 수 있으니 `docker compose down` 으로 정리한다.
+
+### 네이버 로그인 (인가 코드)
+
+시크릿은 **`application-local.yml`**(Git 무시)에만 두고, `bootRun` 기본 프로필 `local`로 읽는다.
+
+1. [네이버 개발자센터](https://developers.naver.com/)에서 애플리케이션 등록
+2. 사용 API: **네아로(네이버 로그인)**
+3. Callback URL: `http://127.0.0.1:5173/auth/naver/callback`
+4. 로컬 설정 파일 준비:
+
+```bash
+cp src/main/resources/application-local.yml.example \
+   src/main/resources/application-local.yml
+# application-local.yml 의 client-id / client-secret 을 발급값으로 수정
+```
+
+5. 백엔드 기동 (`local` 프로필 자동 적용):
+
+```bash
+SPRING_DOCKER_COMPOSE_ENABLED=false ./gradlew bootRun
+```
+
+프론트 로그인/회원가입 화면의 **네이버로 로그인** 버튼으로 테스트한다.
+
+> `application-local.yml` 은 `.gitignore` 대상이다. `git status` 에 보이면 안 된다.
 
 ### Postman
 
