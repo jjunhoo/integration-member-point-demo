@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.retail.membership.common.lock.DistributedLock;
@@ -66,6 +67,7 @@ public class MembershipCommandService {
     public void accumulatePoint(PointCommand command) {
         Instant now = Instant.now();
         Membership membership = getOrCreate(command.userId());
+        
         expireStaleLots(membership, now);
 
         Instant expiresAt = resolveExpiresAt(command.expiresAt(), now);
@@ -73,6 +75,7 @@ public class MembershipCommandService {
         pointLotRepository.save(lot);
 
         membership.accumulate(command.amount());
+
         log.debug("[Command] 적립 완료 userId={} amount={} lotId={} expiresAt={} balance={} grade={}",
                 command.userId(), command.amount(), lot.getId(), expiresAt,
                 membership.getPointBalance(), membership.getGrade());
@@ -125,14 +128,40 @@ public class MembershipCommandService {
             timeUnit = TimeUnit.MILLISECONDS)
     @Transactional
     public List<PointLot> listLots(String userId) {
-        Instant now = Instant.now();
-        membershipRepository.findById(userId).ifPresent(membership -> {
-            long expired = expireStaleLots(membership, now);
-            if (expired > 0) {
-                publishAfterCommit(membership, MembershipEventType.POINT_EXPIRED, expired);
-            }
-        });
+        expirePointsForUserUnlocked(userId, Instant.now());
+        // 전체 lot: ORDER BY expires_at ASC, earned_at ASC (FEFO 순)
         return pointLotRepository.findByUserIdOrderByExpiresAtAscEarnedAtAsc(userId);
+    }
+
+    /**
+     * 배치/스케줄러용 만료 정리.
+     *
+     * <p>API 의 lazy expire 와 동일 로직이며, 유저 단위 분산 락으로
+     * 적립·차감과 상호 배제한다. 만료분이 있으면 {@code POINT_EXPIRED} 를 발행한다.
+     *
+     * @return 이번에 만료 처리한 금액 (없으면 0)
+     */
+    @DistributedLock(
+            key = "'point:' + #userId",
+            waitTime = 3000L,
+            leaseTime = 5000L,
+            timeUnit = TimeUnit.MILLISECONDS)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public long expirePointsForUser(String userId) {
+        return expirePointsForUserUnlocked(userId, Instant.now());
+    }
+
+    /** 락이 이미 잡힌 호출부에서 쓰는 만료 정리. */
+    private long expirePointsForUserUnlocked(String userId, Instant now) {
+        return membershipRepository.findById(userId)
+                .map(membership -> {
+                    long expired = expireStaleLots(membership, now);
+                    if (expired > 0) {
+                        publishAfterCommit(membership, MembershipEventType.POINT_EXPIRED, expired);
+                    }
+                    return expired;
+                })
+                .orElse(0L);
     }
 
     /**
@@ -144,6 +173,8 @@ public class MembershipCommandService {
      * @param now    기준 시각 (만료 판정)
      */
     private void burnLotsFefo(String userId, long amount, Instant now) {
+        // 사용 가능 lot: remaining > 0 AND expires_at > now
+        // ORDER BY expires_at ASC, earned_at ASC (만료 임박 → 선적립)
         List<PointLot> lots = pointLotRepository
                 .findByUserIdAndRemainingAmountGreaterThanAndExpiresAtAfterOrderByExpiresAtAscEarnedAtAsc(
                         userId, 0L, now);
@@ -155,6 +186,7 @@ public class MembershipCommandService {
             if (remainingToBurn <= 0) {
                 break;
             }
+            
             long burned = lot.consume(remainingToBurn);
             if (burned > 0) {
                 pointUsageRepository.save(PointUsage.of(userId, lot.getId(), burned, deductTxId, now));
@@ -174,36 +206,43 @@ public class MembershipCommandService {
      * @return 이번에 만료 처리한 금액 (없으면 0)
      */
     private long expireStaleLots(Membership membership, Instant now) {
+        // 만료 대상 lot: remaining > 0 AND expires_at <= now
         List<PointLot> expired = pointLotRepository
                 .findByUserIdAndRemainingAmountGreaterThanAndExpiresAtLessThanEqual(
                         membership.getUserId(), 0L, now);
+
         long expiredTotal = 0L;
+
         for (PointLot lot : expired) {
             expiredTotal += lot.expireRemaining();
         }
+
         if (expiredTotal > 0) {
             membership.deduct(expiredTotal);
             log.info("[Command] 만료 포인트 정리 userId={} expiredAmount={} balance={}",
                     membership.getUserId(), expiredTotal, membership.getPointBalance());
         }
+
         return expiredTotal;
     }
 
     /**
      * 적립 lot 만료일을 결정한다. 요청값이 없으면 적립 시각 + 1년.
      *
-     * @param requested 클라이언트가 넘긴 만료 시각 (nullable)
-     * @param earnedAt  적립 시각
+     * @param requestedExpiresAt 클라이언트가 넘긴 만료 시각 (nullable)
+     * @param earnedAt           적립 시각
      */
-    private Instant resolveExpiresAt(Instant requested, Instant earnedAt) {
-        if (requested == null) {
+    private Instant resolveExpiresAt(Instant requestedExpiresAt, Instant earnedAt) {
+        if (requestedExpiresAt == null) {
             // Instant 는 Years 단위를 지원하지 않음 → UTC OffsetDateTime 으로 1년 가산
             return earnedAt.atOffset(ZoneOffset.UTC).plusYears(DEFAULT_EXPIRE_YEARS).toInstant();
         }
-        if (!requested.isAfter(earnedAt)) {
+
+        if (!requestedExpiresAt.isAfter(earnedAt)) {
             throw new IllegalArgumentException("만료일(expiresAt)은 현재 시각보다 이후여야 합니다.");
         }
-        return requested;
+
+        return requestedExpiresAt;
     }
 
     /** 멤버십이 없으면 신규 생성(잔액 0) 후 반환한다. */
@@ -224,6 +263,7 @@ public class MembershipCommandService {
                 membership.getPointBalance(),
                 membership.getTotalAccumulatedPoint(),
                 membership.getGrade());
+
         applicationEventPublisher.publishEvent(event);
     }
 }

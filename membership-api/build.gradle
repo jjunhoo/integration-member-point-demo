@@ -1,0 +1,37 @@
+plugins {
+    id 'org.springframework.boot'
+}
+
+dependencies {
+    implementation project(':membership-common')
+
+    // --- Spring Core ---
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // --- Security & 인증 (로그인/소셜로그인/JWT) ---
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+    // --- Resilience4j (Consumer Fault Tolerance) ---
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+
+    // --- Runtime / Dev ---
+    runtimeOnly 'com.h2database:h2'
+    // 로컬 bootRun 시 docker-compose(Redis/Kafka)를 앱 생명주기에 묶음 (운영 jar 에는 미포함)
+    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // --- Test ---
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+}
+
+// 로컬 데모: bootRun 기본 프로필을 local 로 두어 application-local.yml 을 읽는다.
+tasks.named('bootRun') {
+    systemProperty 'spring.profiles.active',
+            System.getenv('SPRING_PROFILES_ACTIVE') ?: 'local'
+}

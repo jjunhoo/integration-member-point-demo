@@ -1,15 +1,15 @@
 package com.retail.membership.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * <p><b>용도:</b> Java time(Instant 등) JSON 직렬화를 위한 Jackson 모듈 등록.</p>
+ * <p><b>용도:</b> HTTP JSON 직렬화용 Jackson 커스터마이저.</p>
  *
- * Jackson 설정. 도메인 이벤트의 {@code Instant}(java.time) 직렬화를 지원한다.
+ * <p>Kafka 등에서 쓰는 {@code ObjectMapper} 빈은 {@code membership-common} 의
+ * {@link ObjectMapperConfig} 가 제공한다.
  */
 @Configuration
 public class JacksonConfig {
@@ -24,14 +24,5 @@ public class JacksonConfig {
             builder.postConfigurer(mapper -> mapper.configure(
                     com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true));
         };
-    }
-
-    /** Kafka Producer/Consumer 에서 직접 사용할 ObjectMapper. */
-    @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        return mapper;
     }
 }

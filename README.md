@@ -7,12 +7,14 @@
 | **회원** | 통합 회원 식별, 채널 계정 연결, 소셜 아이덴티티 매핑 |
 | **인증** | Spring Security + JWT, 소셜 로그인(카카오/네이버/애플) |
 | **포인트** | 분산 락 기반 적립/차감, Kafka EDA로 Redis 조회 뷰 동기화 |
+| **배치** | Spring Batch 만료 Job (lazy expire 보완) |
 
 ## 기술 스택
 
-- Java 17, Spring Boot 3.3.x
+- Java 17, Spring Boot 3.4.x (Gradle multi-module)
 - Spring Security, JJWT
-- Spring Data JPA (데모: H2)
+- Spring Data JPA (데모: 파일 H2 + AUTO_SERVER, API/Batch 공유)
+- Spring Batch (포인트 만료 Job)
 - Redisson (분산 락 + Cache-Aside 뷰 + Refresh 토큰 저장)
 - Spring Kafka, Resilience4j
 
@@ -25,20 +27,32 @@
 | `HOME_SHOPPING` | 홈쇼핑 | 홈쇼핑/커머스 |
 | `O4O_APP` | O4O | Online for Offline 앱 |
 
+## 모듈 구조
+
+```
+integration-member-point-demo/
+├── membership-common/   # 공유 라이브러리 (도메인·커맨드·락·이벤트 발행)
+├── membership-api/      # REST API 애플리케이션 (웹·시큐리티·Kafka Consumer)
+├── membership-batch/    # Spring Batch 애플리케이션 (pointExpireJob)
+├── frontend/            # Vue 3
+└── docker-compose.yml   # Redis / Kafka
+```
+
 ## 패키지 구조 (바운디드 컨텍스트)
 
 ```
 com.retail.membership
-├── auth/                 # 로그인·JWT·소셜 provider 전략
-├── member/               # 통합 회원·채널 계정·소셜 계정
-├── point/                # 포인트·등급 CQRS (바운디드 컨텍스트)
-│   ├── api/              # REST Controller
-│   ├── application/      # Command 서비스 (적립/차감)
-│   ├── domain/           # Master DB 애그리거트
-│   ├── event/            # Kafka Producer/Consumer/DLQ
-│   └── query/            # Redis 조회 뷰
-├── common/lock/          # @DistributedLock AOP (공용)
-└── config/               # 앱 전역 설정
+├── auth/                 # [api] 로그인·JWT·소셜 provider 전략
+├── member/               # [api] 통합 회원·채널 계정·소셜 계정
+├── point/                # 포인트·등급 CQRS
+│   ├── api/              # [api] REST Controller
+│   ├── application/      # [common] Command 서비스 (적립/차감/만료)
+│   ├── domain/           # [common] Master DB 애그리거트
+│   ├── event/            # Producer/Publisher [common], Consumer/DLQ [api]
+│   └── query/            # [api] Redis 조회 뷰
+├── common/lock/          # [common] @DistributedLock AOP
+├── config/               # 공유/앱별 설정
+└── batch/job/            # [batch] pointExpireJob
 ```
 
 ## 아키텍처 요약
@@ -382,21 +396,32 @@ Master DB 커밋 성공
 ## 실행
 
 ```bash
-# 1) 백엔드 (Java 17)
-# spring-boot-docker-compose 가 docker-compose.yml 의 Redis/Kafka 를
+# 1) API (Java 17)
+# spring-boot-docker-compose 가 루트 docker-compose.yml 의 Redis/Kafka 를
 # 앱 시작 시 up, 종료 시 down 한다. (별도 docker-compose up 불필요)
 export JAVA_HOME=$(/usr/libexec/java_home -v 17)
-./gradlew bootRun
+./gradlew :membership-api:bootRun
 
 # 2) 프론트 (Vue 3 + Vite) — 다른 터미널
 cd frontend
 npm install
 npm run dev
 # http://localhost:5173
+
+# 3) 만료 배치 (API가 쓰는 동일 H2/Redis/Kafka 필요)
+# Redis/Kafka 는 API bootRun 또는 수동 docker compose 로 띄운 뒤 실행
+./gradlew :membership-batch:bootRun
 ```
 
 > 참고: 컨테이너를 이미 수동으로 띄운 상태면 Boot 는 up/down 을 건너뛴다.
 > 그 경우 종료 후에도 인프라가 남을 수 있으니 `docker compose down` 으로 정리한다.
+
+### 포인트 만료 배치
+
+- Job 이름: `pointExpireJob`
+- 만료 lot(`remaining > 0 AND expires_at <= now`)이 있는 유저를 페이지 단위로 읽어
+  `MembershipCommandService.expirePointsForUser` 로 정리한다 (API lazy expire와 동일 락·이벤트 경로).
+- 데모 DB: 저장소 루트 `data/membership` (H2 `AUTO_SERVER=TRUE`로 API/Batch 동시 접속).
 
 ### 네이버 로그인 (인가 코드)
 
@@ -408,15 +433,15 @@ npm run dev
 4. 로컬 설정 파일 준비:
 
 ```bash
-cp src/main/resources/application-local.yml.example \
-   src/main/resources/application-local.yml
+cp membership-api/src/main/resources/application-local.yml.example \
+   membership-api/src/main/resources/application-local.yml
 # application-local.yml 의 client-id / client-secret 을 발급값으로 수정
 ```
 
-5. 백엔드 기동 (`local` 프로필 자동 적용):
+5. API 기동 (`local` 프로필 자동 적용):
 
 ```bash
-SPRING_DOCKER_COMPOSE_ENABLED=false ./gradlew bootRun
+SPRING_DOCKER_COMPOSE_ENABLED=false ./gradlew :membership-api:bootRun
 ```
 
 프론트 로그인/회원가입 화면의 **네이버로 로그인** 버튼으로 테스트한다.
