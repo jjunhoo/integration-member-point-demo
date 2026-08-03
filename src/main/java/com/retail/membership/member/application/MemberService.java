@@ -1,6 +1,8 @@
 package com.retail.membership.member.application;
 
+import com.retail.membership.auth.local.LocalCredentialRepository;
 import com.retail.membership.auth.social.SocialUserInfo;
+import com.retail.membership.member.api.MemberResponse;
 import com.retail.membership.member.domain.Channel;
 import com.retail.membership.member.domain.ChannelAccount;
 import com.retail.membership.member.domain.ChannelAccountRepository;
@@ -40,6 +42,7 @@ public class MemberService {
     private final IntegratedMemberRepository memberRepository;
     private final SocialAccountRepository socialAccountRepository;
     private final ChannelAccountRepository channelAccountRepository;
+    private final LocalCredentialRepository localCredentialRepository;
 
     /**
      * 소셜 사용자 정보로 통합 회원을 조회하거나(가입되어 있으면) 신규 생성한다.
@@ -127,5 +130,18 @@ public class MemberService {
     @Transactional(readOnly = true)
     public List<ChannelAccount> getChannelAccounts(String memberId) {
         return channelAccountRepository.findByMemberId(memberId);
+    }
+
+    /**
+     * 내 정보 API 응답 조립.
+     * 로컬 가입이면 loginId 를 포함하고, 소셜만 있으면 loginId 는 null.
+     */
+    @Transactional(readOnly = true)
+    public MemberResponse getMemberResponse(String memberId) {
+        IntegratedMember member = getMember(memberId);
+        String loginId = localCredentialRepository.findByMemberId(memberId)
+                .map(c -> c.getLoginId())
+                .orElse(null);
+        return MemberResponse.of(member, loginId, getChannelAccounts(memberId));
     }
 }

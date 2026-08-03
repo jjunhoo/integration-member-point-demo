@@ -9,8 +9,10 @@ import java.util.List;
  * <p><b>용도:</b> 통합 회원 정보와 연결된 채널 목록을 담는 응답 DTO.</p>
  */
 public record MemberResponse(
-        /** 통합 회원 ID. */
+        /** 통합 회원 ID (내부 UUID). */
         String memberId,
+        /** 로컬 로그인 ID. 소셜만 가입한 경우 null. */
+        String loginId,
         /** 이름. */
         String name,
         /** 이메일. */
@@ -33,8 +35,9 @@ public record MemberResponse(
     ) {
     }
 
-    /** 통합 회원과 채널 계정 목록으로 API 응답 DTO를 조립한다. */
-    public static MemberResponse of(IntegratedMember member, List<ChannelAccount> channels) {
+    /** 통합 회원·로그인 ID·채널 계정 목록으로 API 응답 DTO를 조립한다. */
+    public static MemberResponse of(
+            IntegratedMember member, String loginId, List<ChannelAccount> channels) {
         List<ChannelAccountView> channelViews = channels.stream()
                 .map(c -> new ChannelAccountView(
                         c.getChannel().name(),
@@ -44,6 +47,7 @@ public record MemberResponse(
                 .toList();
         return new MemberResponse(
                 member.getId(),
+                loginId,
                 member.getName(),
                 member.getEmail(),
                 member.getStatus().name(),
