@@ -21,4 +21,6 @@ dependencies {
 tasks.named('bootRun') {
     systemProperty 'spring.profiles.active',
             System.getenv('SPRING_PROFILES_ACTIVE') ?: 'local'
+    systemProperty 'MEMBERSHIP_H2_FILE',
+            "${rootProject.projectDir.absolutePath}/data/membership"
 }

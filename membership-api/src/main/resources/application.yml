@@ -24,17 +24,20 @@ spring:
   # 운영 환경에서는 Master DB(MySQL/Oracle)로 교체한다.
   # ------------------------------------------------------------------
   datasource:
-    # bootRun cwd = membership-api → 저장소 루트 data/ 공유
-    url: jdbc:h2:file:../data/membership;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1;MODE=MySQL
+    # 절대경로(MEMBERSHIP_H2_FILE) 권장. 상대경로 ../data 는 cwd 에 따라 콘솔 접속이 깨지기 쉽다.
+    # AUTO_SERVER=TRUE 필수: 앱이 DB 를 연 상태에서 H2 Console 이 같은 파일에 붙을 수 있다.
+    url: jdbc:h2:file:${MEMBERSHIP_H2_FILE:../data/membership};AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1;MODE=MySQL
     driver-class-name: org.h2.Driver
     username: sa
     password:
-  # 로컬 조회용. 앱 기동 중 http://localhost:8080/h2-console
-  # JDBC URL 은 위 datasource.url 과 동일해야 같은 DB 를 본다.
+  # http://localhost:8080/h2-console
+  # JDBC URL 은 로그의 Database available at ...' 값을 그대로 쓰되, AUTO_SERVER=TRUE 가 빠지면 안 된다.
   h2:
     console:
       enabled: true
       path: /h2-console
+      settings:
+        web-allow-others: false
   jpa:
     hibernate:
       ddl-auto: update
