@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: membership-batch
+
+  main:
+    web-application-type: none
+
+  # API 와 동일 파일 DB(+ AUTO_SERVER)를 공유한다. 인메모리 H2 는 프로세스별로 분리되므로 사용하지 않는다.
+  datasource:
+    # bootRun cwd = membership-batch → 저장소 루트 data/ 공유
+    url: jdbc:h2:file:../data/membership;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  batch:
+    jdbc:
+      # 데모: 배치 메타 테이블 자동 생성
+      initialize-schema: always
+    job:
+      # bootRun 시 pointExpireJob 1회 실행 후 종료
+      enabled: true
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all
+      retries: 3
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+redisson:
+  address: ${REDIS_ADDRESS:redis://127.0.0.1:6379}
+
+retail:
+  membership:
+    kafka:
+      domain-event-topic: membership.domain-event.v1
+      dlq-topic: membership.domain-event.v1.DLQ
+    lock:
+      wait-time-ms: 3000
+      lease-time-ms: 5000
+
+logging:
+  level:
+    com.retail.membership: INFO

@@ -1,74 +1,39 @@
 plugins {
-    id 'java'
-    id 'org.springframework.boot' version '3.3.2'
-    id 'io.spring.dependency-management' version '1.1.6'
+    // Gradle 9 호환을 위해 3.4.x 사용 (3.3.x bootJar 는 getDirMode 오류)
+    id 'org.springframework.boot' version '3.4.5' apply false
+    id 'io.spring.dependency-management' version '1.1.7' apply false
 }
 
-group = 'com.retail'
-version = '1.0.0'
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
 
-java {
-    // 통합 멤버십 시스템 - Java 17 기준
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+    group = 'com.retail'
+    version = '1.0.0'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
     }
-}
 
-repositories {
-    mavenCentral()
-}
+    repositories {
+        mavenCentral()
+    }
 
-dependencies {
-    // --- Spring Core ---
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-aop' // 분산 락 AOP
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    dependencyManagement {
+        imports {
+            mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+        }
+    }
 
-    // --- Security & 인증 (로그인/소셜로그인/JWT) ---
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+    // AOP 파라미터 바인딩(@annotation) 및 SpEL 파라미터 참조(#command)를 위해
+    // 메서드 파라미터명을 클래스 파일에 보존한다.
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs.add('-parameters')
+    }
 
-    // --- Kafka (EDA) ---
-    implementation 'org.springframework.kafka:spring-kafka'
-
-    // --- Redisson (분산 락 + Redis Cache-Aside 뷰 저장소) ---
-    implementation 'org.redisson:redisson-spring-boot-starter:3.31.0'
-
-    // --- Resilience4j (Consumer Fault Tolerance) ---
-    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
-
-    // --- 직렬화 (도메인 이벤트 JSON) ---
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
-
-    // --- Runtime / Dev ---
-    runtimeOnly 'com.h2database:h2' // 데모용 인메모리 DB (실제는 MySQL/Oracle 등)
-    // 로컬 bootRun 시 docker-compose(Redis/Kafka)를 앱 생명주기에 묶음 (운영 jar 에는 미포함)
-    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
-
-    // --- Test ---
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.kafka:spring-kafka-test'
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
-}
-
-// 로컬 데모: bootRun 기본 프로필을 local 로 두어 application-local.yml 을 읽는다.
-// (시크릿은 application-local.yml 에만 두고 Git 에 커밋하지 않는다)
-tasks.named('bootRun') {
-    systemProperty 'spring.profiles.active',
-            System.getenv('SPRING_PROFILES_ACTIVE') ?: 'local'
-}
-
-// AOP 파라미터 바인딩(@annotation) 및 SpEL 파라미터 참조(#command)를 위해
-// 메서드 파라미터명을 클래스 파일에 보존한다.
-tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs.add('-parameters')
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
 }

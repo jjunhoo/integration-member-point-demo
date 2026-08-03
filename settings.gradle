@@ -1,1 +1,5 @@
 rootProject.name = 'integration-member-point-demo'
+
+include 'membership-common'
+include 'membership-api'
+include 'membership-batch'
