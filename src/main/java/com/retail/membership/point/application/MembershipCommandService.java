@@ -17,7 +17,7 @@ import com.retail.membership.point.event.MembershipDomainEvent;
 import com.retail.membership.point.event.MembershipEventType;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -197,7 +197,8 @@ public class MembershipCommandService {
      */
     private Instant resolveExpiresAt(Instant requested, Instant earnedAt) {
         if (requested == null) {
-            return earnedAt.plus(DEFAULT_EXPIRE_YEARS, ChronoUnit.YEARS);
+            // Instant 는 Years 단위를 지원하지 않음 → UTC OffsetDateTime 으로 1년 가산
+            return earnedAt.atOffset(ZoneOffset.UTC).plusYears(DEFAULT_EXPIRE_YEARS).toInstant();
         }
         if (!requested.isAfter(earnedAt)) {
             throw new IllegalArgumentException("만료일(expiresAt)은 현재 시각보다 이후여야 합니다.");

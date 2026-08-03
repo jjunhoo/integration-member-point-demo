@@ -71,8 +71,8 @@ public class MembershipController {
     /**
      * 포인트 조회 뷰 (Redis Cache-Aside).
      *
-     * <p>Kafka 로 동기화된 잔액/등급 스냅샷을 반환한다.
-     * 아직 이벤트가 반영되지 않았으면 404.
+     * <p>Redis 히트면 스냅샷을 반환하고, 미스(TTL 만료 등)면 Master DB 에서 읽어
+     * Redis 에 재적재한 뒤 반환한다. 멤버십 자체가 없으면 404.
      */
     @GetMapping("/{userId}/view")
     public ResponseEntity<MembershipView> getView(@PathVariable String userId) {

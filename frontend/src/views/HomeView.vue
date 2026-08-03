@@ -15,7 +15,7 @@
     <section v-if="member" class="block">
       <h2>내 정보</h2>
       <dl class="meta">
-        <div><dt>회원 ID</dt><dd>{{ member.memberId }}</dd></div>
+        <div><dt>로그인 ID</dt><dd>{{ member.loginId || '-' }}</dd></div>
         <div><dt>이름</dt><dd>{{ member.name || '-' }}</dd></div>
         <div><dt>이메일</dt><dd>{{ member.email || '-' }}</dd></div>
         <div><dt>상태</dt><dd>{{ member.status }}</dd></div>

@@ -2,7 +2,6 @@ package com.retail.membership.member.api;
 
 import com.retail.membership.auth.security.MemberPrincipal;
 import com.retail.membership.member.application.MemberService;
-import com.retail.membership.member.domain.IntegratedMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -37,14 +36,12 @@ public class MemberController {
     /**
      * 내 통합 회원 정보 조회.
      *
-     * <p>JWT 의 memberId 로 통합 회원과 연결된 채널 계정 목록을 함께 반환한다.
+     * <p>JWT 의 memberId 로 통합 회원·로컬 loginId·채널 계정 목록을 반환한다.
      * 프론트 메인 화면의 “내 정보” 영역에 사용한다.
      */
     @GetMapping("/me")
     public ResponseEntity<MemberResponse> me(@AuthenticationPrincipal MemberPrincipal principal) {
-        IntegratedMember member = memberService.getMember(principal.memberId());
-        var channels = memberService.getChannelAccounts(principal.memberId());
-        return ResponseEntity.ok(MemberResponse.of(member, channels));
+        return ResponseEntity.ok(memberService.getMemberResponse(principal.memberId()));
     }
 
     /**
@@ -59,8 +56,6 @@ public class MemberController {
             @Valid @RequestBody LinkChannelRequest request) {
         memberService.linkChannelAccount(
                 principal.memberId(), request.channel(), request.channelMemberNo());
-        IntegratedMember member = memberService.getMember(principal.memberId());
-        var channels = memberService.getChannelAccounts(principal.memberId());
-        return ResponseEntity.ok(MemberResponse.of(member, channels));
+        return ResponseEntity.ok(memberService.getMemberResponse(principal.memberId()));
     }
 }
