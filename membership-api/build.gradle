@@ -34,4 +34,7 @@ dependencies {
 tasks.named('bootRun') {
     systemProperty 'spring.profiles.active',
             System.getenv('SPRING_PROFILES_ACTIVE') ?: 'local'
+    // H2 파일 절대경로 → 콘솔/배치가 cwd 와 무관하게 같은 DB 를 본다
+    systemProperty 'MEMBERSHIP_H2_FILE',
+            "${rootProject.projectDir.absolutePath}/data/membership"
 }

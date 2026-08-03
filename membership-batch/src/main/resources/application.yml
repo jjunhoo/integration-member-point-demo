@@ -7,8 +7,8 @@ spring:
 
   # API 와 동일 파일 DB(+ AUTO_SERVER)를 공유한다. 인메모리 H2 는 프로세스별로 분리되므로 사용하지 않는다.
   datasource:
-    # bootRun cwd = membership-batch → 저장소 루트 data/ 공유
-    url: jdbc:h2:file:../data/membership;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1;MODE=MySQL
+    # API 와 동일 절대경로. bootRun 이 MEMBERSHIP_H2_FILE 을 주입한다.
+    url: jdbc:h2:file:${MEMBERSHIP_H2_FILE:../data/membership};AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1;MODE=MySQL
     driver-class-name: org.h2.Driver
     username: sa
     password:
