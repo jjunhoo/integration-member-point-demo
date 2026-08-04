@@ -1,6 +1,8 @@
 package com.retail.membership.config;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -78,7 +80,7 @@ public class KafkaConsumerConfig {
         // 실패한 레코드를 DLQ 토픽(membership.domain-event.v1.DLQ)으로 라우팅한다.
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
                 kafkaTemplate,
-                (record, exception) -> new org.apache.kafka.common.TopicPartition(dlqTopic, record.partition()));
+                (record, exception) -> new TopicPartition(dlqTopic, record.partition()));
 
         ExponentialBackOff backOff = new ExponentialBackOff(500L, 2.0);
         backOff.setMaxElapsedTime(10_000L);   // 총 재시도 시간 상한
@@ -87,8 +89,9 @@ public class KafkaConsumerConfig {
 
         // 역직렬화 실패 등 재시도가 무의미한 예외는 즉시 DLQ 로 보낸다.
         handler.addNotRetryableExceptions(
-                com.fasterxml.jackson.core.JsonProcessingException.class,
+                JsonProcessingException.class,
                 IllegalArgumentException.class);
+
         return handler;
     }
 }
